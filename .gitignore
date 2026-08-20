@@ -1,0 +1,13 @@
+# derleme çıktıları — build.sh üretir, sürüm geçmişinde tutmaya gerek yok
+dist/
+essek-dist.zip
+
+# gizli anahtarlar (üretilirse asla commit'lenmesin)
+_vapid.json
+*.key
+.env
+
+.DS_Store
+
+# Local Netlify folder
+.netlify

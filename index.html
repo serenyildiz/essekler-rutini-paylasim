@@ -1,0 +1,2285 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#fbf7f0">
+<meta name="apple-mobile-web-app-title" content="Eşşekler">
+<meta name="mobile-web-app-capable" content="yes">
+<title>Eşşeklerin Rutini</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="icon-192.png">
+<style>
+:root{
+  /* sıcak, açık tema */
+  --bg:#fbf7f0; --bg2:#f4ece0; --card:#ffffff; --card2:#f7f0e6;
+  --line:#e8dcc9; --txt:#33291f; --dim:#7d6c5b; --dim2:#a1907e;
+  --gold:#b8790c; --goldF:#f0b73f;      /* gold = metin, goldF = dolgu */
+  --teal:#0f8f70; --tealF:#3fc9a5;
+  --red:#c8443a; --redF:#ef8b83; --purple:#7b5fd0;
+  --ink:#2b2118;                         /* dolgu üstündeki koyu metin */
+  --r:16px;
+  --sh:0 1px 2px rgba(80,60,35,.06), 0 4px 14px rgba(80,60,35,.05);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg); color:var(--txt);
+  font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  font-size:15px; line-height:1.45;
+  padding-bottom:calc(78px + env(safe-area-inset-bottom));
+  overscroll-behavior-y:contain;
+}
+#app{max-width:520px;margin:0 auto;padding:0 14px}
+button{font-family:inherit;font-size:inherit;color:inherit;border:0;background:none;cursor:pointer}
+input,select,textarea{font-family:inherit;font-size:16px;color:var(--txt);background:var(--bg2);
+  border:1px solid var(--line);border-radius:10px;padding:10px 12px;width:100%}
+input:focus,select:focus{outline:none;border-color:var(--gold)}
+h1,h2,h3{margin:0;line-height:1.2}
+.muted{color:var(--dim)}.tiny{font-size:12px}.sm{font-size:13px}
+.row{display:flex;align-items:center;gap:10px}
+.between{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.grow{flex:1;min-width:0}
+.ell{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* ---------- header ---------- */
+header{position:sticky;top:0;z-index:40;background:linear-gradient(var(--bg) 74%,rgba(251,247,240,0));
+  padding:calc(10px + env(safe-area-inset-top)) 0 12px}
+.brand{display:flex;align-items:center;gap:9px;padding:2px 6px 2px 0;border-radius:12px}
+.brand:active{background:var(--card2)}
+.brand .logo{font-size:26px}
+.brand h1{font-size:19px;font-weight:800;letter-spacing:-.4px}
+.chev{font-size:12px;color:var(--dim2);margin-left:-3px}
+
+/* ---------- menü / izleme listesi ---------- */
+.menubtn{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:var(--card);
+  border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:9px;box-shadow:var(--sh)}
+.menubtn .mi{font-size:26px;flex:none}
+.menubtn .mt{font-weight:800;font-size:15px}
+.menubtn .ms{font-size:12px;color:var(--dim2);margin-top:1px}
+.menubtn .go{margin-left:auto;color:var(--dim2);font-weight:800}
+.wrow{display:flex;align-items:center;gap:11px;background:var(--card);border:1px solid var(--line);
+  border-radius:14px;padding:9px 11px;margin-bottom:8px;box-shadow:var(--sh);width:100%;text-align:left}
+.wrow.seen{opacity:.5}
+.wshot{width:52px;height:52px;border-radius:10px;object-fit:cover;flex:none;background:var(--bg2);
+  border:1px solid var(--line)}
+.wph{width:52px;height:52px;border-radius:10px;flex:none;background:var(--bg2);border:1px solid var(--line);
+  display:grid;place-items:center;font-size:20px}
+.wname{font-weight:700;font-size:14.5px}
+.wmeta{font-size:11.5px;color:var(--dim2);margin-top:2px;display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.shotbig{width:100%;border-radius:14px;border:1px solid var(--line);display:block;margin-bottom:12px}
+.hbtns{display:flex;gap:6px}
+.iconbtn{width:36px;height:36px;border-radius:11px;background:var(--card);display:grid;place-items:center;font-size:16px;border:1px solid var(--line)}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--dim2);display:inline-block}
+.dot.on{background:var(--teal);box-shadow:0 0 8px var(--teal)}
+.dot.err{background:var(--red)}
+
+/* ---------- cards ---------- */
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px;margin-bottom:12px;box-shadow:var(--sh)}
+.card.tight{padding:11px 12px}
+.sec-title{font-size:12px;font-weight:800;letter-spacing:1.1px;text-transform:uppercase;color:var(--dim2);margin:18px 4px 8px}
+
+/* ---------- oyuncu avatarı ---------- */
+.pav{border-radius:50%;object-fit:cover;display:inline-block;vertical-align:middle;
+  border:1.5px solid rgba(70,50,30,.10);background:var(--bg2);flex:none}
+
+/* ---------- skor tablosu ---------- */
+.score{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:6px;padding:4px 2px 2px}
+.sc{text-align:center;min-width:0}
+.sc .who{display:flex;align-items:center;justify-content:center;gap:5px;font-weight:800;font-size:13.5px}
+.sc .who span.e{font-size:19px}
+.sc .big{font-size:34px;font-weight:900;letter-spacing:-1.6px;line-height:1.05;margin-top:2px}
+.sc .rank{font-size:11px;font-weight:700;color:var(--dim);margin-top:1px}
+.sc .cz{font-size:11px;font-weight:700;color:var(--dim2);margin-top:3px}
+.sc.lead .big{position:relative}
+.vs{font-size:11px;font-weight:900;color:var(--dim2);letter-spacing:1px;padding:0 2px}
+.crown{font-size:13px;margin-left:3px}
+.divider{height:1px;background:var(--line);margin:13px -14px 12px}
+
+/* ---------- goal ring / bar ---------- */
+.goalwrap{text-align:center;padding:16px 14px 14px}
+.goalnum{font-size:40px;font-weight:900;letter-spacing:-2px;line-height:1}
+.goalnum small{font-size:16px;font-weight:700;color:var(--dim);letter-spacing:0}
+.pbar{height:12px;border-radius:99px;background:var(--bg2);overflow:hidden;display:flex;margin-top:12px;border:1px solid var(--line)}
+.pbar i{display:block;height:100%;transition:width .5s cubic-bezier(.2,.8,.2,1)}
+.legend{display:flex;justify-content:center;gap:16px;margin-top:10px;font-size:12px}
+.legend b{font-weight:700}
+
+/* balance bar */
+.balbar{height:34px;border-radius:12px;background:var(--bg2);display:flex;overflow:hidden;border:1px solid var(--line);position:relative}
+.balbar i{display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:var(--ink);transition:width .5s cubic-bezier(.2,.8,.2,1);min-width:0;overflow:hidden}
+.balmid{position:absolute;left:50%;top:0;bottom:0;width:2px;background:rgba(255,255,255,.55);transform:translateX(-1px)}
+
+/* ---------- task rows ---------- */
+.task{display:flex;align-items:center;gap:11px;background:var(--card);border:1px solid var(--line);
+  border-radius:14px;padding:10px 11px;margin-bottom:8px;transition:transform .15s,opacity .25s;box-shadow:var(--sh)}
+.task.late{border-color:#eda9a2;background:linear-gradient(90deg,#fdeceb,var(--card))}
+.task.done{opacity:.42}
+.tico{width:38px;height:38px;border-radius:11px;background:var(--bg2);display:grid;place-items:center;font-size:19px;flex:none}
+.tname{font-weight:650;font-size:14.5px}
+.tmeta{font-size:11.5px;color:var(--dim2);display:flex;gap:7px;flex-wrap:wrap;margin-top:1px}
+.pts{font-weight:900;font-size:15px;color:var(--gold);flex:none;text-align:right;min-width:52px}
+.who{display:flex;gap:5px;flex:none}
+.whocol{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex:none}
+.unassign{font-size:10.5px;font-weight:800;color:var(--dim2);padding:2px 6px;border-radius:7px;
+  background:var(--bg2);border:1px solid var(--line);line-height:1.5}
+.unassign:active{transform:scale(.92);color:var(--red);border-color:var(--redF)}
+.whobtn{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;font-size:16px;
+  border:1.5px solid var(--line);background:var(--bg2);transition:transform .1s}
+.whobtn:active{transform:scale(.88)}
+.badge{display:inline-block;padding:1px 6px;border-radius:6px;font-size:10px;font-weight:800;letter-spacing:.3px}
+.b-me{background:#fbeccd;color:#96620a}
+.b-late{background:#fbdedb;color:#a5322a}
+.b-turn{background:#e6e0f8;color:#5940a8}
+.b-ok{background:#d9f0e6;color:#0f7a5e}
+
+/* ---------- shop ---------- */
+.shop{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.item{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:5px;text-align:left;box-shadow:var(--sh)}
+.item .ic{font-size:26px}
+.item .nm{font-weight:700;font-size:13.5px;line-height:1.25}
+.item .pr{font-weight:900;color:var(--gold);font-size:14px;margin-top:auto;padding-top:6px}
+.item.locked{opacity:.45}
+.item:active{transform:scale(.97)}
+
+/* ---------- pills / chips ---------- */
+.chips{display:flex;gap:6px;overflow-x:auto;padding:2px 0 8px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;padding:7px 13px;border-radius:99px;background:var(--card);border:1px solid var(--line);
+  font-size:12.5px;font-weight:700;color:var(--dim)}
+.chip.on{background:var(--goldF);color:var(--ink);border-color:var(--goldF)}
+
+/* ---------- buttons ---------- */
+.btn{display:block;width:100%;padding:13px;border-radius:13px;font-weight:800;font-size:15px;text-align:center;
+  background:var(--card2);border:1px solid var(--line)}
+.btn.pri{background:var(--goldF);color:var(--ink);border-color:var(--goldF)}
+.btn.gh{background:transparent}
+.btn.dg{color:var(--red)}
+.btn:active{transform:scale(.98)}
+.btn.sm{padding:9px;font-size:13.5px;border-radius:11px;width:auto;padding-left:16px;padding-right:16px}
+
+/* ---------- nav ---------- */
+nav{position:fixed;left:0;right:0;bottom:0;z-index:50;background:rgba(255,253,249,.93);
+  backdrop-filter:blur(16px);border-top:1px solid var(--line);
+  padding:8px 0 calc(8px + env(safe-area-inset-bottom))}
+.navin{max-width:520px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr)}
+.nb{display:flex;flex-direction:column;align-items:center;gap:3px;padding:4px;color:var(--dim2);font-size:10.5px;font-weight:700}
+.nb i{font-style:normal;font-size:20px;line-height:1}
+.nb.on{color:var(--gold)}
+
+/* ---------- modal ---------- */
+.mask{position:fixed;inset:0;background:rgba(52,40,28,.42);z-index:100;display:none;align-items:flex-end;
+  backdrop-filter:blur(3px)}
+.mask.open{display:flex}
+.sheet{background:var(--bg);width:100%;max-width:520px;margin:0 auto;border-radius:22px 22px 0 0;
+  padding:0 16px calc(20px + env(safe-area-inset-bottom));max-height:88vh;overflow-y:auto;
+  border-top:1px solid var(--line);animation:up .28s cubic-bezier(.2,.9,.25,1);
+  overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+@keyframes up{from{transform:translateY(40px);opacity:.4}}
+/* üstte sabit duran tutamak + kapatma butonu */
+.sheetbar{position:sticky;top:0;z-index:6;background:var(--bg);display:flex;align-items:center;
+  justify-content:center;padding:10px 0 12px;margin-bottom:2px}
+.grab{width:38px;height:4px;border-radius:99px;background:var(--line)}
+.sheetX{position:absolute;right:0;top:6px;width:36px;height:36px;border-radius:50%;
+  background:var(--card2);border:1px solid var(--line);display:grid;place-items:center;
+  font-size:15px;font-weight:900;color:var(--dim)}
+.sheetX:active{transform:scale(.9)}
+.field{margin-bottom:11px}
+.field label{display:block;font-size:11.5px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--dim2);margin-bottom:5px}
+
+/* ---------- toast ---------- */
+#toast{position:fixed;left:50%;bottom:calc(96px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(14px);
+  background:var(--txt);color:#fff8ee;border-radius:14px;padding:11px 18px;font-weight:750;font-size:14px;
+  z-index:200;opacity:0;pointer-events:none;transition:.28s;white-space:nowrap;box-shadow:0 12px 30px rgba(60,44,28,.28)}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ---------- stats ---------- */
+.chart{display:flex;align-items:flex-end;gap:6px;height:120px;padding-top:6px}
+.col{flex:1;display:flex;flex-direction:column;justify-content:flex-end;gap:2px;height:100%}
+.col{border-bottom:2px solid var(--line)}
+.col .s{border-radius:4px 4px 0 0;min-height:0;transition:height .4s}
+.col .lb{text-align:center;font-size:10px;color:var(--dim2);margin-top:5px;font-weight:700}
+.kpi{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.kpi>div{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:11px}
+.kpi .v{font-size:22px;font-weight:900;letter-spacing:-.8px}
+.kpi .k{font-size:11px;color:var(--dim2);font-weight:700;text-transform:uppercase;letter-spacing:.5px}
+.lvlbar{height:7px;border-radius:99px;background:var(--bg2);overflow:hidden;margin-top:7px;border:1px solid var(--line)}
+.lvlbar i{display:block;height:100%;background:linear-gradient(90deg,var(--goldF),#ffd98a)}
+.hist{font-size:13px;padding:9px 0;border-bottom:1px solid var(--line);display:flex;gap:9px;align-items:center}
+.hist:last-child{border:0}
+.pop{position:fixed;font-weight:900;font-size:26px;color:var(--gold);pointer-events:none;z-index:300;
+  animation:fly 1s ease-out forwards;text-shadow:0 2px 10px rgba(255,255,255,.9)}
+.pop.neg{color:var(--red)}
+@keyframes fly{0%{opacity:0;transform:translate(-50%,0) scale(.6)}20%{opacity:1;transform:translate(-50%,-14px) scale(1.15)}
+  100%{opacity:0;transform:translate(-50%,-80px) scale(.9)}}
+.empty{text-align:center;padding:34px 18px;color:var(--dim2)}
+.empty .e{font-size:38px;display:block;margin-bottom:8px;opacity:.6}
+#updbar{position:fixed;left:10px;right:10px;bottom:calc(88px + env(safe-area-inset-bottom));z-index:95;
+  max-width:500px;margin:0 auto;display:flex;align-items:center;gap:11px;
+  background:var(--card);border:1px solid var(--teal);border-radius:15px;padding:11px 12px;
+  box-shadow:0 14px 34px rgba(60,44,28,.22);animation:up .3s cubic-bezier(.2,.9,.25,1)}
+#instbar{position:fixed;left:10px;right:10px;bottom:calc(88px + env(safe-area-inset-bottom));z-index:90;
+  max-width:500px;margin:0 auto;display:flex;align-items:center;gap:11px;
+  background:var(--card);border:1px solid var(--goldF);border-radius:15px;padding:11px 12px;
+  box-shadow:0 14px 34px rgba(60,44,28,.22);animation:up .3s cubic-bezier(.2,.9,.25,1)}
+.sw{display:flex;gap:8px}
+.sw button{flex:1;padding:10px;border-radius:11px;background:var(--card);border:1.5px solid var(--line);font-weight:700;font-size:13px}
+.sw button.on{border-color:var(--goldF);background:#fdf1d8;color:var(--gold)}
+
+/* ---------- banner (fotoğraf) ---------- */
+/* ---------- günlük fotoğraflar ---------- */
+.pgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.phalf{position:relative;border-radius:var(--r);overflow:hidden;border:1px solid var(--line);
+  background:var(--card2);box-shadow:var(--sh);aspect-ratio:3/4}
+.phalf.mine{border-color:var(--goldF)}
+.phalf img{display:block;width:100%;height:100%;object-fit:cover}
+.phempty{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
+  color:var(--dim2);text-align:center;padding:10px;
+  background:repeating-linear-gradient(45deg,#f7f0e4,#f7f0e4 12px,#f3ebdd 12px,#f3ebdd 24px)}
+.phempty .e{font-size:28px}
+.phname{position:absolute;left:0;right:0;bottom:0;padding:7px 9px;font-size:11.5px;font-weight:800;
+  color:#fff;display:flex;align-items:center;gap:5px;
+  background:linear-gradient(transparent,rgba(30,20,10,.72))}
+.phname .pav{border-color:rgba(255,255,255,.5)}
+.ptimer{text-align:center;font-size:12px;color:var(--dim);margin:-4px 0 12px;
+  font-variant-numeric:tabular-nums}
+.ptimer b{color:var(--gold);font-weight:800}
+.parch{width:100%;aspect-ratio:3/4;object-fit:cover;border-radius:12px;border:1px solid var(--line);display:block}
+.parch.bos{display:grid;place-items:center;background:var(--bg2);text-align:center;padding:8px}
+
+/* ---------- notlar ---------- */
+.note{display:flex;gap:9px;align-items:flex-start;padding:10px 0;border-bottom:1px dashed var(--line)}
+.note:last-child{border:0;padding-bottom:0}
+.note .av{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-size:15px;flex:none;
+  background:var(--bg2);border:1.5px solid var(--line)}
+.note .tx{font-size:14px;white-space:pre-wrap;word-break:break-word}
+.note .mt{font-size:10.5px;color:var(--dim2);font-weight:700;margin-top:2px}
+.notebox{display:flex;gap:8px;align-items:flex-end;margin-top:10px}
+.notebox textarea{resize:none;min-height:42px;max-height:120px;background:var(--bg2);line-height:1.35;padding:10px 12px}
+.notebox button{flex:none;width:42px;height:42px;border-radius:12px;background:var(--goldF);color:var(--ink);
+  font-size:17px;font-weight:900;display:grid;place-items:center}
+
+/* ---------- yapılacaklar (deadline) ---------- */
+.todo{display:flex;align-items:center;gap:11px;background:var(--card);border:1px solid var(--line);
+  border-radius:14px;padding:10px 11px;margin-bottom:8px;box-shadow:var(--sh)}
+.todo.late{border-color:#eda9a2;background:linear-gradient(90deg,#fdeceb,var(--card))}
+.todo.done{opacity:.5}
+.todo .chk{width:34px;height:34px;border-radius:11px;flex:none;display:grid;place-items:center;
+  border:2px solid var(--line);background:var(--card);font-size:16px}
+.todo .chk.on{background:var(--tealF);border-color:var(--tealF);color:var(--ink)}
+.dsel{display:flex;gap:6px;flex-wrap:wrap}
+.dsel button{padding:8px 13px;border-radius:11px;background:var(--card);border:1.5px solid var(--line);font-weight:700;font-size:13px}
+.dsel button.on{border-color:var(--goldF);background:#fdf1d8;color:var(--gold)}
+</style>
+</head>
+<body>
+
+<div id="app">
+  <header>
+    <div class="between">
+      <button class="brand" onclick="openMenu()"><span class="logo">🫏</span><h1>Eşşeklerin Rutini</h1><span class="chev">▾</span></button>
+      <div class="hbtns">
+        <button class="iconbtn" id="btnSync" title="Senkron"><span class="dot" id="syncDot"></span></button>
+        <button class="iconbtn" onclick="openSettings()">⚙️</button>
+      </div>
+    </div>
+  </header>
+  <main id="view"></main>
+</div>
+
+<nav><div class="navin">
+  <button class="nb" data-tab="today"><i>🫏</i>Eşşekler</button>
+  <button class="nb" data-tab="tasks"><i>🧹</i>Görevler</button>
+  <button class="nb" data-tab="shop"><i>🎁</i>Dükkân</button>
+  <button class="nb" data-tab="stats"><i>📊</i>Durum</button>
+</div></nav>
+
+<div class="mask" id="mask"><div class="sheet" id="sheet"></div></div>
+<div id="toast"></div>
+
+<script>
+/* ============================================================
+   Eşşeklerin Rutini — tek dosya, bağımlılıksız
+   Veri modeli: config (last-write-wins) + log (append-only, id ile birleşir)
+   ============================================================ */
+
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+const DAY = 864e5;
+const APP_VERSION = '__APP_VERSION__';
+const SERO_PHOTO = null;
+const BURKI_PHOTO = null;
+
+/* ---------- tarih yardımcıları ---------- */
+const dkey = d => { const x = new Date(d); x.setHours(0,0,0,0);
+  return x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0'); };
+const today = () => dkey(Date.now());
+const startOfDay = d => { const x = new Date(d); x.setHours(0,0,0,0); return x.getTime(); };
+const daysBetween = (a,b) => Math.round((startOfDay(b)-startOfDay(a))/DAY);
+const startOfWeek = ts => { const x = new Date(ts); x.setHours(0,0,0,0);
+  const w = (x.getDay()+6)%7; x.setTime(x.getTime()-w*DAY); return x.getTime(); };
+const GUN = ['Pzt','Sal','Çar','Per','Cum','Cmt','Paz'];
+
+/* ---------- varsayılan içerik ---------- */
+const DEFAULT_TASKS = [
+  {n:'Bulaşık yıkama',            i:'🍽️', p:15, f:'daily'},
+  {n:'Bulaşık makinesini boşalt', i:'🫧', p:10, f:'daily'},
+  {n:'Yemek yapma',               i:'🍳', p:25, f:'daily'},
+  {n:'Mutfak tezgâhını sil',      i:'🧽', p:10, f:'daily'},
+  {n:'Çöp atma',                  i:'🗑️', p:8,  f:'daily'},
+  {n:'Yatak toplama',             i:'🛏️', p:5,  f:'daily'},
+  {n:'Salonu toparlama',          i:'🛋️', p:12, f:'daily'},
+  {n:'Süpürme',                   i:'🧹', p:20, f:'weekly'},
+  {n:'Paspas',                    i:'🪣', p:25, f:'weekly'},
+  {n:'Toz alma',                  i:'🪶', p:15, f:'weekly'},
+  {n:'Banyo temizliği',           i:'🚿', p:35, f:'weekly'},
+  {n:'Tuvalet temizliği',         i:'🚽', p:30, f:'weekly'},
+  {n:'Çamaşır yıkama',            i:'🧺', p:10, f:'weekly'},
+  {n:'Çamaşır asma',              i:'🪢', p:15, f:'weekly'},
+  {n:'Çamaşır katlama & kaldırma',i:'👕', p:20, f:'weekly'},
+  {n:'Ütü',                       i:'♨️', p:30, f:'weekly'},
+  {n:'Market alışverişi',         i:'🛒', p:30, f:'weekly'},
+  {n:'Çarşaf değiştirme',         i:'🛌', p:20, f:'weekly'},
+  {n:'Bitkileri sulama',          i:'🪴', p:6,  f:'weekly'},
+  {n:'Buzdolabı düzenleme',       i:'🧊', p:25, f:'monthly'},
+  {n:'Dolap/gardırop düzeni',     i:'🚪', p:35, f:'monthly'},
+  {n:'Cam silme',                 i:'🪟', p:40, f:'monthly'},
+  {n:'Faturalar & ödemeler',      i:'🧾', p:15, f:'monthly'},
+];
+/* özel aralıklı / dönüşümlü görevler */
+const DEFAULT_SPECIAL = [
+  {id:null, name:'Kedi kumu', icon:'🐈', points:12, freq:'custom', days:2, alternate:true, active:true},
+];
+const DEFAULT_SHOP = [
+  {n:'Bulaşık muafiyeti (1 gün)',   i:'🎫', pr:80,  d:'O gün bulaşık diğerinde'},
+  {n:'Film/dizi seçme hakkı',       i:'🍿', pr:60,  d:'İtiraz kabul edilmez'},
+  {n:'Kahvaltıyı o hazırlasın',     i:'🥐', pr:120, d:'Yatakta servis opsiyonel'},
+  {n:'15 dk sırt masajı',           i:'💆', pr:150, d:'Telefonsuz, gerçek masaj'},
+  {n:'Dışarıdan yemek söyleme',     i:'🍕', pr:200, d:'Hesap ödeyen: diğeri'},
+  {n:'1 saat fazla uyku',           i:'😴', pr:100, d:'Sabah görevleri diğerinde'},
+  {n:'Tembellik jokeri (tam gün)',  i:'🃏', pr:400, d:'O gün hiçbir görev sende değil'},
+  {n:'Eşşek Kupası 🏆',             i:'🏆', pr:500, d:'Haftanın Eşşeği unvanı + övünme hakkı'},
+];
+const LEVELS = [
+  {p:0,     n:'Yavru Eşşek',    e:'🍼'},
+  {p:300,   n:'Çırak Eşşek',    e:'🫏'},
+  {p:800,   n:'Kalfa Eşşek',    e:'🧹'},
+  {p:1800,  n:'Usta Eşşek',     e:'⭐'},
+  {p:3500,  n:'Kıdemli Eşşek',  e:'🎖️'},
+  {p:6000,  n:'Efsane Eşşek',   e:'👑'},
+  {p:10000, n:'Ev Tanrısı',     e:'🏛️'},
+];
+const FREQ = {daily:{n:'Günlük',d:1}, weekly:{n:'Haftalık',d:7}, monthly:{n:'Aylık',d:30},
+              custom:{n:'Özel',d:2}};
+/* görevin tekrar aralığı (gün) ve okunur adı */
+const periodOf = t => t.freq === 'custom' ? Math.max(1, t.days || 2) : FREQ[t.freq].d;
+const freqName = t => t.freq === 'custom' ? `${periodOf(t)} günde bir` : FREQ[t.freq].n;
+
+/* ---------- state ---------- */
+const KEY = 'essek_rutini_v1';
+/* Senkron hazır geliyor — iki telefonda da ayar yapmaya gerek yok.
+   Oda kodu tahmin edilmesin diye rastgele; Ayarlar > Senkron'dan değiştirilebilir. */
+const DEFAULT_SYNC = {
+  /* Kendi Supabase projeni bağla: Ayarlar > senkron noktası.
+     Ya da buraya yaz; oda kodunu ikinizde aynı tut. */
+  url:  '',
+  key:  '',
+  room: ''
+};
+let S, sync = {...DEFAULT_SYNC}, tab = 'today', taskFilter = 'due';
+
+function freshState(){
+  return {
+    version: 1,
+    config: {
+      updatedAt: Date.now(),
+      players: [
+        {id:'p1', name:'Eşşek 1', emoji:'🐴', color:'#e8a72c', photo:SERO_PHOTO},
+        {id:'p2', name:'Eşşek 2', emoji:'🫏', color:'#2fb894', photo:BURKI_PHOTO},
+      ],
+      weeklyGoal: 400,
+      latePenalty: 50,          // deadline kaçarsa görev puanının yüzde kaçı ceza
+      banner: null,             // ana sayfadaki fotoğraf (data URL)
+      catAdded: true,
+      tasks: [
+        ...DEFAULT_TASKS.map(t => ({id:uid(), name:t.n, icon:t.i, points:t.p, freq:t.f, active:true})),
+        ...DEFAULT_SPECIAL.map(t => ({...t, id:uid()})),
+      ],
+      shop:  DEFAULT_SHOP.map(s => ({id:uid(), name:s.n, icon:s.i, price:s.pr, desc:s.d, active:true})),
+    },
+    log: [],
+  };
+}
+
+function load(){
+  try{
+    const raw = localStorage.getItem(KEY);
+    S = raw ? JSON.parse(raw) : freshState();
+    if(!S.config || !S.log) S = freshState();
+    migrate();
+  }catch(e){ S = freshState(); }
+  try{
+    const saved = JSON.parse(localStorage.getItem(KEY+'_sync')) || {};
+    if(saved.off) { sync = {url:'', key:'', room:'', off:true}; return; }
+    sync = { url:  saved.url  || DEFAULT_SYNC.url,
+             key:  saved.key  || DEFAULT_SYNC.key,
+             room: saved.room || DEFAULT_SYNC.room };
+  }catch(e){ sync = {...DEFAULT_SYNC}; }
+}
+/* eski kayıtları yeni alanlara/isimlere taşı */
+function migrate(){
+  const c = S.config, F = freshState().config;
+  if(c.latePenalty == null) c.latePenalty = F.latePenalty;
+  /* günlük hedeften haftalığa geçiş */
+  if(c.weeklyGoal == null){ c.weeklyGoal = (c.dailyGoal || 60) * 7; delete c.dailyGoal; }
+  if(c.banner === undefined) c.banner = null;
+  /* kedi kumu: 2 günde bir, dönüşümlü — bir kez eklenir, silinirse geri gelmez */
+  if(!c.catAdded){
+    c.catAdded = true;
+    if(!c.tasks.some(t => /kedi kumu/i.test(t.name)))
+      c.tasks.push({id:uid(), name:'Kedi kumu', icon:'🐈', points:12,
+                    freq:'custom', days:2, alternate:true, active:true});
+  }
+  const oldNames = {}, oldCols = {'#f5b942':'#e8a72c','#3ec9a7':'#2fb894'};
+  for(const p of c.players){
+    if(p.name === oldNames[p.id]) p.name = F.players.find(x=>x.id===p.id).name;
+    if(oldCols[p.color]) p.color = oldCols[p.color];
+    /* fotoğrafı hiç görmemiş kayıtlara varsayılanı ver; silinmişse (null) dokunma */
+    if(p.photo === undefined) p.photo = F.players.find(x=>x.id===p.id).photo;
+  }
+}
+function save(){ localStorage.setItem(KEY, JSON.stringify(S)); }
+function saveSync(){ localStorage.setItem(KEY+'_sync', JSON.stringify(sync)); }
+
+function touchConfig(){ S.config.updatedAt = Date.now(); save(); pushSoon(); }
+function addEvent(ev){ ev.id = ev.id || uid(); ev.t = ev.t || Date.now(); S.log.push(ev); save(); pushSoon(); }
+
+/* ---------- türetilmiş veriler ---------- */
+/* 'reset' olayı: kendisinden önceki her şeyi görünmez kılar.
+   Silmek yerine perde çekiyoruz ki senkronda iki telefon da aynı sonuca varsın. */
+function resetPoint(){
+  let cut = 0;
+  for(const e of S.log) if(e.type==='reset' && e.t > cut) cut = e.t;
+  return cut;
+}
+function liveLog(){
+  const undone = new Set(S.log.filter(e => e.type==='undo').map(e => e.ref));
+  const cut = resetPoint();
+  return S.log
+    .filter(e => e.type!=='undo' && e.type!=='reset' && !undone.has(e.id) && e.t > cut)
+    .sort((a,b)=>a.t-b.t);
+}
+function P(){ return S.config.players; }
+function pl(id){ return P().find(p=>p.id===id) || P()[0]; }
+
+function wallet(pid){
+  let v = 0;
+  for(const e of liveLog()){
+    if(e.player!==pid) continue;
+    if(e.type==='task' || e.type==='bonus') v += e.points;
+    if(e.type==='buy') v -= e.price;
+  }
+  return v - penaltiesFor(pid);
+}
+function lifetime(pid){
+  let v = 0;
+  for(const e of liveLog()) if(e.player===pid && (e.type==='task'||e.type==='bonus')) v += e.points;
+  return v;
+}
+function earnedBetween(pid, from, to){
+  let v = 0;
+  for(const e of liveLog()) if(e.player===pid && e.type==='task' && e.t>=from && e.t<to) v += e.points;
+  return v;
+}
+function dayPoints(pid, ts){ return earnedBetween(pid, startOfDay(ts), startOfDay(ts)+DAY); }
+function weekPoints(pid, ts=Date.now()){ const s = startOfWeek(ts); return earnedBetween(pid, s, s+7*DAY); }
+
+/* Dönüşümlü görevler: en son kim yaptıysa sıra diğerinde.
+   Zorunlu değil — diğerinin işi varsa öbürü de yapabilir, sıra kendiliğinden düzelir. */
+function lastDoneBy(taskId){
+  let t = -1, who = null;
+  /* liveLog zamana göre sıralı; eşit zamanda sonraki kayıt kazansın diye >= */
+  for(const e of liveLog())
+    if(e.type==='task' && e.taskId===taskId && e.t >= t){ t = e.t; who = e.player; }
+  return who;
+}
+function turnFor(task){
+  if(!task.alternate) return null;
+  const last = lastDoneBy(task.id);
+  if(!last) return null;                       // hiç yapılmadıysa sıra kimsede değil
+  const other = P().find(p => p.id !== last);
+  return other ? other.id : null;
+}
+
+function lastDone(taskId){
+  let t = 0;
+  for(const e of liveLog()) if(e.type==='task' && e.taskId===taskId && e.t>t) t = e.t;
+  return t;
+}
+/* görev vadesi: kaç gün gecikmiş? 0 = tam zamanında/bugün due, <0 = daha vakti var */
+function overdue(task){
+  const last = lastDone(task.id);
+  const period = periodOf(task);
+  if(!last) return 0;                       // hiç yapılmamış → bugün due
+  return daysBetween(last, Date.now()) - period;
+}
+function isDue(task){ return overdue(task) >= 0; }
+function doneToday(task){ const l = lastDone(task.id); return l && dkey(l)===today(); }
+
+
+/* günlük hedef & seri */
+function weekTotal(ts = Date.now()){
+  const s = startOfWeek(ts);
+  let v = 0;
+  for(const e of liveLog()) if(e.type==='task' && e.t>=s && e.t<s+7*DAY) v += e.points;
+  return v;
+}
+function goalHit(ts){ return weekTotal(ts) >= S.config.weeklyGoal; }
+function todayTotal(){ return P().reduce((s,p)=>s+dayPoints(p.id, Date.now()), 0); }
+/* kaç hafta üst üste hedef tutturuldu */
+function streak(){
+  let n = 0, ts = Date.now();
+  if(!goalHit(ts)) ts -= 7*DAY;             // bu hafta henüz olmadıysa geçen haftadan say
+  while(goalHit(ts) && n < 999){ n++; ts -= 7*DAY; }
+  return n;
+}
+function levelOf(pts){
+  let cur = LEVELS[0], nxt = null;
+  for(let i=0;i<LEVELS.length;i++){
+    if(pts >= LEVELS[i].p){ cur = LEVELS[i]; nxt = LEVELS[i+1] || null; }
+  }
+  return {cur, nxt, pct: nxt ? (pts-cur.p)/(nxt.p-cur.p) : 1};
+}
+/* Kalıcı sahiplik: bir görevi üstlenen, onu tamamlayana kadar sahibi kalır
+   (gün değişse de). Tamamlanınca iş havuza döner — tekrar biri üstlenmeli. */
+function assignments(){
+  const lastAssign = {}, lastDone = {}, lastDrop = {};
+  for(const e of liveLog()){
+    if(e.type === 'assign') lastAssign[e.taskId] = e;
+    if(e.type === 'unassign' && (!lastDrop[e.taskId] || e.t > lastDrop[e.taskId])) lastDrop[e.taskId] = e.t;
+    if(e.type === 'task' && (!lastDone[e.taskId] || e.t > lastDone[e.taskId])) lastDone[e.taskId] = e.t;
+  }
+  const m = {};
+  for(const taskId in lastAssign){
+    const a = lastAssign[taskId];
+    /* üstlenme, hem son tamamlamadan hem son bırakmadan sonra olmalı */
+    if(a.t > (lastDone[taskId] || 0) && a.t > (lastDrop[taskId] || 0)) m[taskId] = a.player;
+  }
+  return m;
+}
+/* ---------- yapılacaklar (deadline'lı) ---------- */
+function todoList(){ return liveLog().filter(e => e.type==='todo'); }
+function todoDoneAt(td){
+  const e = liveLog().find(x => x.type==='task' && x.taskId===td.taskId && x.player===td.player && x.t >= td.t);
+  return e ? e.t : null;
+}
+function dueEnd(td){ return startOfDay(new Date(td.due + 'T00:00:00').getTime()) + DAY; }
+/* open = süresi var | done = zamanında | late = kaçırdı | late-done = geç yaptı */
+function todoStatus(td){
+  const c = todoDoneAt(td);
+  if(c) return c < dueEnd(td) ? 'done' : 'late-done';
+  return Date.now() >= dueEnd(td) ? 'late' : 'open';
+}
+function todoPenalty(td){
+  const st = todoStatus(td);
+  if(st !== 'late' && st !== 'late-done') return 0;
+  return Math.max(1, Math.round(td.points * (S.config.latePenalty||0) / 100));
+}
+function penaltiesFor(pid){
+  let v = 0;
+  for(const td of todoList()) if(td.player === pid) v += todoPenalty(td);
+  return v;
+}
+function notes(){ return liveLog().filter(e => e.type==='note').reverse(); }
+
+/* ---------- izleme listesi (film / dizi) ---------- */
+function watchList(kind){
+  return liveLog().filter(e => e.type==='watch' && e.kind===kind).reverse();
+}
+/* izlendi işaretlenenler: watch id -> işaretleme olayı */
+function watchedMap(){
+  const m = {};
+  for(const e of liveLog()) if(e.type==='watched') m[e.ref] = e;
+  return m;
+}
+function isWatched(id){ return !!watchedMap()[id]; }
+
+function pending(){
+  const done = new Set(liveLog().filter(e=>e.type==='fulfill').map(e=>e.ref));
+  return liveLog().filter(e => e.type==='buy' && !done.has(e.id)).reverse();
+}
+
+/* ============================================================
+   UI
+   ============================================================ */
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+/* oyuncu avatarı: fotoğraf varsa fotoğraf, yoksa emoji */
+function av(p, px = 20){
+  return p.photo
+    ? `<img class="pav" src="${p.photo}" alt="" style="width:${px}px;height:${px}px">`
+    : `<span style="font-size:${Math.round(px*0.95)}px;line-height:1">${p.emoji}</span>`;
+}
+
+function toast(msg){
+  const t = $('#toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(t._x); t._x = setTimeout(()=>t.classList.remove('show'), 1900);
+}
+function pop(txt, x, y){
+  const el = document.createElement('div');
+  el.className = 'pop'; el.textContent = txt; el.style.left = x+'px'; el.style.top = y+'px';
+  document.body.appendChild(el); setTimeout(()=>el.remove(), 1000);
+}
+function buzz(ms=18){ if(navigator.vibrate) try{navigator.vibrate(ms)}catch(e){} }
+
+function render(){
+  document.querySelectorAll('.nb').forEach(b => b.classList.toggle('on', b.dataset.tab===tab));
+  $('#view').innerHTML = ({today:vToday, tasks:vTasks, shop:vShop, stats:vStats})[tab]();
+  window.scrollTo({top:0});
+}
+
+/* hafta pazar akşamı biter */
+function gunKaldi(){
+  const kalan = Math.ceil((startOfWeek(Date.now()) + 7*DAY - Date.now()) / DAY);
+  return kalan <= 1 ? 'son gün' : kalan + ' gün var';
+}
+
+/* ---------------- EŞŞEKLER (ana sayfa) ---------------- */
+function vToday(){
+  const [a,b] = P();
+  const pa = weekPoints(a.id), pb = weekPoints(b.id);
+  const tot = pa+pb, goal = S.config.weeklyGoal;
+  const pct = Math.min(100, tot/goal*100);
+  const st = streak();
+
+  const asg = assignments();
+  const due = S.config.tasks.filter(t => t.active!==false && isDue(t) && !doneToday(t)).sort(byUrgency);
+  const pend = pending();
+
+  /* genel puanlar (ömür boyu kazanılan) */
+  const la = lifetime(a.id), lb = lifetime(b.id);
+  const lead = la === lb ? null : (la > lb ? a.id : b.id);
+  const sc = (p, val, other) => {
+    const L = levelOf(val);
+    return `<div class="sc ${lead===p.id?'lead':''}">
+      <div class="who" style="color:${p.color}">${av(p,26)}${esc(p.name)}${lead===p.id?'<span class="crown">👑</span>':''}</div>
+      <div class="big" style="color:${p.color}">${val}</div>
+      <div class="rank">${L.cur.e} ${L.cur.n}</div>
+      <div class="cz">cüzdan ${wallet(p.id)}p</div>
+    </div>`;
+  };
+
+  let h = bannerHTML() + notesHTML() + `
+  <div class="card goalwrap" style="padding-bottom:14px">
+    <div class="between" style="margin-bottom:6px">
+      <span class="tiny muted" style="font-weight:800;letter-spacing:1px;text-transform:uppercase">Genel Puan</span>
+      <button class="tiny" style="color:var(--gold);font-weight:800" onclick="workHistorySheet()">İş Bilgisi ›</button>
+    </div>
+    <div class="score">${sc(a, la)}<span class="vs">VS</span>${sc(b, lb)}</div>
+    <div class="sm" style="margin-top:10px;color:var(--dim)">
+      ${la === lb ? '⚖️ Tam berabere. Kimse öne geçemedi.'
+        : `${pl(lead).emoji} <b style="color:${pl(lead).color}">${esc(pl(lead).name)}</b> ${Math.abs(la-lb)} puan önde`}
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="between" style="margin-bottom:8px">
+      <span class="tiny muted" style="font-weight:800;letter-spacing:1px;text-transform:uppercase">Haftanın Hedefi</span>
+      <span style="font-weight:900;font-size:17px">${tot}<span style="font-size:12px;color:var(--dim);font-weight:700"> / ${goal}</span></span>
+    </div>
+    <div class="pbar" style="margin-top:0">
+      <i style="width:${Math.min(100,pa/goal*100)}%;background:${a.color}"></i>
+      <i style="width:${Math.min(100-Math.min(100,pa/goal*100), pb/goal*100)}%;background:${b.color}"></i>
+    </div>
+    <div class="legend">
+      <span>${av(a,16)} <b style="color:${a.color}">${esc(a.name)}</b> ${pa}</span>
+      <span>${av(b,16)} <b style="color:${b.color}">${esc(b.name)}</b> ${pb}</span>
+    </div>
+    <div class="sm" style="margin-top:9px;color:${tot>=goal?'var(--teal)':'var(--dim)'}">
+      ${tot>=goal ? `✅ Bu hafta tamam! Seri: 🔥 ${st||1} hafta`
+        : `Hedefe ${goal-tot} puan kaldı · ${gunKaldi()} · 🔥 Seri: ${st} hafta`}
+    </div>
+  </div>`;
+
+  /* süresi dolan / bugün biten yapılacaklar */
+  const urgent = todoList()
+    .filter(td => { const s = todoStatus(td); return s==='late' || (s==='open' && daysBetween(Date.now(), dueEnd(td)-1) <= 1); })
+    .sort((a,b) => dueEnd(a)-dueEnd(b));
+  if(urgent.length){
+    h += `<div class="between" style="margin:18px 4px 8px">
+      <span class="sec-title" style="margin:0">Süre Doluyor</span>
+      <button class="tiny" style="color:var(--gold);font-weight:800" onclick="tab='tasks';render()">hepsi →</button>
+    </div>`;
+    for(const td of urgent) h += todoRow(td);
+  }
+
+  /* bekleyen ödül talepleri */
+  if(pend.length){
+    h += `<div class="sec-title">Bekleyen Ödüller</div>`;
+    for(const e of pend){
+      const o = P().find(p=>p.id!==e.player) || {};
+      h += `<div class="task">
+        <div class="tico">${e.icon||'🎁'}</div>
+        <div class="grow"><div class="tname ell">${esc(e.name)}</div>
+          <div class="tmeta">${pl(e.player).emoji} ${esc(pl(e.player).name)} aldı → ${o.emoji||''} ${esc(o.name||'')} yapacak</div></div>
+        <button class="btn sm pri" onclick="fulfill('${e.id}')">Yapıldı</button>
+      </div>`;
+    }
+  }
+
+  /* İŞLER: bu kişinin üstüne aldığı her şey, son tarihiyle */
+  h += `<div class="between" style="margin:18px 4px 8px">
+      <span class="sec-title" style="margin:0">İşler</span>
+      <button class="btn sm pri" onclick="addWorkSheet()">+ İş Ekle</button>
+    </div>`;
+
+  if(!me){
+    h += `<div class="card tight" style="margin-bottom:12px"><div class="tiny" style="font-weight:800;margin-bottom:7px">Bu telefon kimin?</div>
+      <div class="sw">${P().map(p => `<button onclick="setMe('${p.id}');render()">${p.emoji} ${esc(p.name)}</button>`).join('')}</div>
+      <div class="tiny muted" style="margin-top:6px">Seçmeden de görebilirsin, ama iş üstlenmek için gerekiyor.</div></div>`;
+  }
+
+  /* Herkesin işleri, kişi kişi ayrı bölümde. Atama kalıcı — kim üstlendiyse,
+     görev tamamlanana kadar onda kalır. Sıralamada kendi bölümün önde. */
+  const atanmis = pid => S.config.tasks.filter(t => t.active !== false && !doneToday(t) && asg[t.id] === pid);
+  const todoOf   = pid => todoList().filter(td => td.player === pid && ['open','late'].includes(todoStatus(td)))
+                            .sort((a,b) => dueEnd(a) - dueEnd(b));
+  const gorevOf  = pid => atanmis(pid).sort((x,y) => taskDueDay(x) - taskDueDay(y) || byUrgency(x,y));
+
+  const sira = me ? [me, ...P().map(p=>p.id).filter(id=>id!==me)] : P().map(p=>p.id);
+  let hicIsYok = true;
+  for(const pid of sira){
+    const p = pl(pid), kTodo = todoOf(pid), kGorev = gorevOf(pid);
+    if(!kTodo.length && !kGorev.length) continue;
+    hicIsYok = false;
+    h += `<div class="sec-title" style="margin-top:${pid===sira[0]?'0':'16px'}">
+      ${av(p,14)} ${esc(p.name)}${pid===me?' (sen)':''} · ${kTodo.length+kGorev.length}</div>`;
+    for(const td of kTodo) h += todoRow(td);
+    for(const t of kGorev) h += taskRow(t, asg[t.id], {due:true, hideWho:true});
+  }
+  if(hicIsYok){
+    h += `<div class="empty" style="padding:26px 18px"><span class="e">🫗</span>
+      Üstlenilmiş iş yok.<br><span class="tiny">
+      Yukarıdaki <b>+ İş Ekle</b>'ye bas, listeden seç.</span></div>`;
+  }
+
+  return h;
+}
+
+
+/* ============================================================
+   MENÜ — başlığa dokununca açılır (ana sekmelerde yok)
+   ============================================================ */
+const KIND = {film:{ad:'Filmler', tek:'Film', ikon:'🎬'}, dizi:{ad:'Diziler', tek:'Dizi', ikon:'📺'}};
+
+function openMenu(){
+  const say = k => {
+    const hepsi = watchList(k), izlenen = hepsi.filter(w => isWatched(w.id)).length;
+    return hepsi.length ? `${hepsi.length} kayıt · ${hepsi.length-izlenen} izlenmedi` : 'henüz boş';
+  };
+  sheet(`
+    <h2 style="margin-bottom:14px">Menü</h2>
+    ${Object.entries(KIND).map(([k,v]) => `
+      <button class="menubtn" onclick="openWatch('${k}')">
+        <span class="mi">${v.ikon}</span>
+        <span><span class="mt">${v.ad}</span><span class="ms">${say(k)}</span></span>
+        <span class="go">›</span>
+      </button>`).join('')}
+    <button class="menubtn" onclick="openPhotoArchive()">
+      <span class="mi">📸</span>
+      <span><span class="mt">Fotoğraf Arşivi</span><span class="ms">${
+        photoDB ? (Object.keys(photoDB).length ? Object.keys(photoDB).length + ' gün' : 'henüz boş') : 'günlük fotoğraflar'
+      }</span></span>
+      <span class="go">›</span>
+    </button>
+    <button class="menubtn" onclick="closeSheet();openSettings()">
+      <span class="mi">⚙️</span>
+      <span><span class="mt">Ayarlar</span><span class="ms">isimler, hedef, bildirimler</span></span>
+      <span class="go">›</span>
+    </button>
+  `);
+}
+
+/* genel görsel seçici: küçült, sıkıştır, data URL döndür */
+function pickImage(maxW, kalite, cb){
+  const inp = document.createElement('input');
+  inp.type = 'file'; inp.accept = 'image/*';
+  inp.onchange = () => {
+    const f = inp.files[0]; if(!f) return;
+    toast('Görsel işleniyor…');
+    const img = new Image(), rd = new FileReader();
+    rd.onload = () => { img.src = rd.result; };
+    img.onload = () => {
+      const sc = Math.min(1, maxW / img.width);
+      const c = document.createElement('canvas');
+      c.width = Math.round(img.width*sc); c.height = Math.round(img.height*sc);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      cb(c.toDataURL('image/jpeg', kalite));
+    };
+    img.onerror = () => toast('Bu dosya okunamadı');
+    rd.readAsDataURL(f);
+  };
+  inp.click();
+}
+
+function openWatch(kind){
+  const v = KIND[kind], liste = watchList(kind), wm = watchedMap();
+  const satir = w => {
+    const s = wm[w.id];
+    return `<button class="wrow ${s?'seen':''}" onclick="watchDetail('${w.id}')">
+      ${w.shot ? `<img class="wshot" src="${w.shot}" alt="">` : `<span class="wph">${v.ikon}</span>`}
+      <span class="grow">
+        <span class="wname ell" style="display:block">${esc(w.title)}</span>
+        <span class="wmeta">${av(pl(w.player),14)} ${esc(pl(w.player).name)} ekledi
+          ${s ? `<span class="badge b-ok">✓ izlendi</span>` : ''}
+          ${w.shot ? `<span class="badge b-me">📷</span>` : ''}</span>
+      </span>
+      <span class="go" style="color:var(--dim2);font-weight:800">›</span>
+    </button>`;
+  };
+  const izlenmemis = liste.filter(w => !wm[w.id]), izlenmis = liste.filter(w => wm[w.id]);
+  sheet(`
+    <div class="between" style="margin-bottom:12px">
+      <h2>${v.ikon} ${v.ad}</h2>
+      <button class="btn sm pri" onclick="addWatch('${kind}')">+ Ekle</button>
+    </div>
+    ${!liste.length ? `<div class="empty" style="padding:26px 18px"><span class="e">${v.ikon}</span>
+        Liste boş.<br><span class="tiny">“+ Ekle”ye bas — istersen ekran görüntüsüyle.</span></div>` : ''}
+    ${izlenmemis.length ? `<div class="sec-title" style="margin-top:0">İzlenecek (${izlenmemis.length})</div>
+      ${izlenmemis.map(satir).join('')}` : ''}
+    ${izlenmis.length ? `<div class="sec-title">İzlendi (${izlenmis.length})</div>
+      ${izlenmis.map(satir).join('')}` : ''}
+    <button class="btn gh" style="margin-top:10px" onclick="openMenu()">‹ Menüye dön</button>
+  `);
+}
+
+let yeniShot = null;
+function addWatch(kind){
+  yeniShot = null;
+  const v = KIND[kind];
+  sheet(`
+    <h2 style="margin-bottom:3px">${v.tek} Ekle</h2>
+    <p class="sm muted" style="margin:0 0 12px">İsmi yaz, istersen ekran görüntüsü de koy.</p>
+    <div class="field"><label>${v.tek} adı</label>
+      <input id="wTitle" placeholder="${kind==='film'?'ör. Whiplash':'ör. The Bear'}"></div>
+    <div id="wShotWrap"></div>
+    <button class="btn gh" style="margin-bottom:10px" onclick="secShot()">📷 Ekran görüntüsü ekle</button>
+    <button class="btn pri" onclick="saveWatch('${kind}')">Kaydet</button>
+    <button class="btn gh" style="margin-top:8px" onclick="openWatch('${kind}')">Vazgeç</button>
+  `);
+}
+function secShot(){
+  pickImage(640, 0.6, url => {
+    yeniShot = url;
+    $('#wShotWrap').innerHTML = `<img class="shotbig" src="${url}" alt="">
+      <button class="btn gh dg" style="margin-bottom:10px" onclick="yeniShot=null;$('#wShotWrap').innerHTML=''">Görseli kaldır</button>`;
+    toast('Görsel eklendi 📷');
+  });
+}
+function saveWatch(kind){
+  const title = $('#wTitle').value.trim();
+  if(!title) return toast('Önce ismini yaz');
+  addEvent({type:'watch', kind, title, shot:yeniShot, player: me || P()[0].id});
+  yeniShot = null;
+  openWatch(kind); toast('Listeye eklendi ✓');
+}
+
+function watchDetail(id){
+  const w = liveLog().find(e => e.type==='watch' && e.id===id); if(!w) return;
+  const v = KIND[w.kind], s = watchedMap()[id];
+  sheet(`
+    <h2 style="margin-bottom:4px">${esc(w.title)}</h2>
+    <p class="sm muted" style="margin:0 0 12px">${v.ikon} ${v.tek} · ${esc(pl(w.player).name)} ekledi · ${relTime(w.t)}</p>
+    ${w.shot ? `<img class="shotbig" src="${w.shot}" alt="">` : ''}
+    ${s ? `<div class="card tight" style="background:#e6f6ef;border-color:#9ad9c3;margin-bottom:10px">
+        <b>✓ İzlendi</b><div class="tiny muted" style="margin-top:2px">${esc(pl(s.player).name)} işaretledi · ${relTime(s.t)}</div>
+      </div>
+      <button class="btn gh" onclick="undo('${s.id}');openWatch('${w.kind}')">İzlenmedi yap</button>`
+      : `<button class="btn pri" onclick="markWatched('${id}')">✓ İzlendi işaretle</button>`}
+    <button class="btn gh" style="margin-top:8px" onclick="shotFor('${id}')">📷 ${w.shot?'Görseli değiştir':'Görsel ekle'}</button>
+    <button class="btn gh dg" style="margin-top:8px" onclick="undo('${id}');openWatch('${w.kind}')">Listeden sil</button>
+    <button class="btn gh" style="margin-top:8px" onclick="openWatch('${w.kind}')">‹ Listeye dön</button>
+  `);
+}
+function markWatched(id){
+  addEvent({type:'watched', ref:id, player: me || P()[0].id});
+  watchDetail(id); toast('İzlendi ✓');
+}
+/* var olan kayda görsel ekle: eski kaydı silip görselli kopyasını yaz */
+function shotFor(id){
+  const w = liveLog().find(e => e.type==='watch' && e.id===id); if(!w) return;
+  pickImage(640, 0.6, url => {
+    const eskiIzlendi = watchedMap()[id];
+    addEvent({type:'undo', ref:id});
+    const yeni = {type:'watch', kind:w.kind, title:w.title, shot:url, player:w.player};
+    addEvent(yeni);
+    if(eskiIzlendi){                       /* izlendi işaretini yeni kayda taşı */
+      addEvent({type:'undo', ref:eskiIzlendi.id});
+      addEvent({type:'watched', ref:yeni.id, player:eskiIzlendi.player});
+    }
+    openWatch(w.kind); toast('Görsel eklendi 📷');
+  });
+}
+
+/* ---------------- banner (fotoğraf) ---------------- */
+/* ============================================================
+   GÜNLÜK FOTOĞRAFLAR
+   Her gün herkes 1 fotoğraf atar, ana sayfada yan yana durur.
+   Ertesi gün yerini yenilerine bırakır, eskiler arşive düşer.
+
+   Fotoğraflar ANA VERİYE girmez — ayrı bir Supabase satırında
+   ("<oda>:photos") tutulur. Yoksa her senkronda hepsi baştan
+   gönderilir ve veri birkaç haftada megabaytlara çıkardı.
+   ============================================================ */
+let photoDB = null;          // { 'YYYY-MM-DD': {p1:dataURL, p2:dataURL} }
+let photoLoading = false;
+const PHOTO_KEEP_DAYS = 60;  // arşivde tutulacak gün sayısı
+
+function photoRowId(){ return sync.room + ':photos'; }
+
+async function loadPhotos(sessiz = true){
+  if(!syncOn()){ photoDB = photoDB || {}; return photoDB; }
+  if(photoLoading) return photoDB;
+  photoLoading = true;
+  try{
+    const r = await api(`rooms?id=eq.${encodeURIComponent(photoRowId())}&select=data`);
+    if(r.ok){
+      const rows = await r.json();
+      photoDB = (rows[0] && rows[0].data) || {};
+      if(!sessiz) render();
+    }
+  }catch(e){ photoDB = photoDB || {}; }
+  finally{ photoLoading = false; }
+  return photoDB;
+}
+
+async function savePhotos(){
+  if(!syncOn()) return;
+  /* eskileri buda ki kayıt sonsuza kadar büyümesin */
+  const sinir = dkey(Date.now() - PHOTO_KEEP_DAYS * DAY);
+  for(const g of Object.keys(photoDB)) if(g < sinir) delete photoDB[g];
+  try{
+    await api('rooms', { method:'POST',
+      headers:{ Prefer:'resolution=merge-duplicates,return=minimal' },
+      body: JSON.stringify([{ id: photoRowId(), data: photoDB, updated_at: new Date().toISOString() }]) });
+  }catch(e){ toast('Fotoğraf yüklenemedi'); }
+}
+
+function todayPhotos(){ return (photoDB && photoDB[today()]) || {}; }
+
+/* ---- ana sayfadaki ikiye bölünmüş alan ---- */
+function bannerHTML(){
+  if(photoDB === null){ loadPhotos(false); }        // ilk açılışta arka planda çek
+  const bugun = todayPhotos();
+  const yari = p => {
+    const foto = bugun[p.id], benimki = me === p.id;
+    return `<div class="phalf ${benimki ? 'mine' : ''}" ${benimki ? `onclick="pickDailyPhoto()"` : (foto ? `onclick="viewPhoto('${today()}','${p.id}')"` : '')}>
+      ${foto ? `<img src="${foto}" alt="">`
+        : `<div class="phempty">
+             <span class="e">${benimki ? '📷' : '🫥'}</span>
+             <span class="tiny">${benimki ? 'Bugünkü fotoğrafın' : esc(p.name) + ' henüz atmadı'}</span>
+           </div>`}
+      <span class="phname">${av(p,14)} ${esc(p.name)}${benimki && foto ? ' · değiştir' : ''}</span>
+    </div>`;
+  };
+  const [a,b] = P();
+  const varmi = bugun[a.id] || bugun[b.id];
+  return `<div class="pgrid">${yari(a)}${yari(b)}</div>
+    ${varmi ? `<div class="ptimer" id="ptimer">${photoCountdownText()}</div>` : ''}`;
+}
+
+/* Fotoğraflar gece yarısı yenilenir — kalan süreyi yaz */
+function photoCountdownText(){
+  let kalan = Math.max(0, startOfDay(Date.now()) + DAY - Date.now());
+  const sa = Math.floor(kalan / 3600000);
+  const dk = Math.floor(kalan % 3600000 / 60000);
+  const sn = Math.floor(kalan % 60000 / 1000);
+  const iki = n => String(n).padStart(2, '0');
+  return `🕐 Yenilenmesine <b>${iki(sa)}:${iki(dk)}:${iki(sn)}</b> kaldı`;
+}
+/* Saniyede bir sadece bu satırı güncelle — tüm sayfayı yeniden çizmeye gerek yok.
+   Gün dönünce bir kez render edip yeni günün boş kutularına geç. */
+let ptimerId = null;
+function startPhotoTimer(){
+  clearInterval(ptimerId);
+  let sonGun = today();
+  ptimerId = setInterval(() => {
+    if(today() !== sonGun){ sonGun = today(); render(); return; }
+    const el = $('#ptimer');
+    if(el) el.innerHTML = photoCountdownText();
+  }, 1000);
+}
+
+function pickDailyPhoto(){
+  if(!me) return toast('Önce bu telefonun kimin olduğunu seç');
+  if(!syncOn()) return toast('Fotoğraf için senkron gerekiyor');
+  pickImage(720, 0.62, async url => {
+    photoDB = photoDB || {};
+    const ilkMi = !(photoDB[today()] || {})[me];
+    (photoDB[today()] ||= {})[me] = url;
+    render();
+    await savePhotos();
+    /* Görselin kendisi ayrı kayıtta; buraya sadece "paylaşıldı" izi bırakıyoruz
+       ki bildirim ne olduğunu söyleyebilsin ve geçmişte görünsün. */
+    if(ilkMi) addEvent({type:'photo', player:me, day:today()});
+    else push();
+    toast('Bugünkü fotoğrafın yüklendi 📷');
+  });
+}
+
+function viewPhoto(gun, pid){
+  const foto = photoDB && photoDB[gun] && photoDB[gun][pid];
+  if(!foto) return;
+  const p = pl(pid);
+  const d = new Date(gun + 'T00:00:00');
+  const etiket = gun === today() ? 'Bugün' : gun === dkey(Date.now()-DAY) ? 'Dün'
+    : d.toLocaleDateString('tr-TR',{day:'numeric',month:'long',weekday:'long'});
+  sheet(`
+    <h2 style="margin-bottom:3px">${esc(p.name)}</h2>
+    <p class="sm muted" style="margin:0 0 12px">${etiket}</p>
+    <img class="shotbig" src="${foto}" alt="">
+    ${gun === today() && pid === me
+      ? `<button class="btn gh" onclick="closeSheet();pickDailyPhoto()">📷 Değiştir</button>` : ''}
+  `);
+}
+
+/* ---- menüdeki fotoğraf arşivi ---- */
+async function openPhotoArchive(){
+  await loadPhotos();
+  const gunler = Object.keys(photoDB || {}).sort().reverse();
+  const [a,b] = P();
+  const kart = gun => {
+    const g = photoDB[gun], d = new Date(gun + 'T00:00:00');
+    const etiket = gun === today() ? 'Bugün' : gun === dkey(Date.now()-DAY) ? 'Dün'
+      : `${GUN[(d.getDay()+6)%7]} · ${d.toLocaleDateString('tr-TR',{day:'numeric',month:'short'})}`;
+    const kutu = p => g[p.id]
+      ? `<img src="${g[p.id]}" class="parch" onclick="viewPhoto('${gun}','${p.id}')" alt="">`
+      : `<div class="parch bos"><span class="tiny muted">${esc(p.name)} atmamış</span></div>`;
+    return `<div class="tiny" style="font-weight:800;color:var(--dim);margin:12px 4px 6px">${etiket}</div>
+      <div class="pgrid" style="margin-bottom:0">${kutu(a)}${kutu(b)}</div>`;
+  };
+  sheet(`
+    <h2 style="margin-bottom:3px">📸 Fotoğraf Arşivi</h2>
+    <p class="sm muted" style="margin:0 0 4px">${gunler.length ? gunler.length + ' günün fotoğrafı' : ''}
+      ${gunler.length ? `· son ${PHOTO_KEEP_DAYS} gün saklanır` : ''}</p>
+    ${gunler.length ? gunler.map(kart).join('')
+      : `<div class="empty" style="padding:26px 18px"><span class="e">📸</span>
+         Henüz fotoğraf yok.<br><span class="tiny">Ana sayfadan bugünkü fotoğrafını at.</span></div>`}
+    <button class="btn gh" style="margin-top:14px" onclick="openMenu()">‹ Menüye dön</button>
+  `);
+}
+
+/* ---------------- notlar ---------------- */
+function notesHTML(){
+  const list = notes().slice(0, 6);
+  return `<div class="card">
+    <div class="between" style="margin-bottom:2px">
+      <span class="sec-title" style="margin:0">Hallooo</span>
+      ${notes().length > 6 ? `<span class="tiny muted">son 6 not</span>` : ''}
+    </div>
+    ${list.length ? list.map(n => {
+      const p = pl(n.player);
+      return `<div class="note">
+        <span class="av" style="border-color:${p.color};overflow:hidden;padding:0">${av(p,27)}</span>
+        <div class="grow"><div class="tx">${esc(n.text)}</div>
+          <div class="mt" style="color:${p.color}">${esc(p.name)} · ${relTime(n.t)}</div></div>
+        <button class="tiny" style="color:var(--dim2);padding:2px 4px" onclick="undo('${n.id}')">✕</button>
+      </div>`;
+    }).join('') : `<div class="tiny muted" style="padding:8px 0">Henüz not yok. “Süt bitti”, “Seni seviyorum”, “Çöpü sen at” — ne istersen.</div>`}
+    ${me ? `<div class="notebox">
+        <textarea id="noteTx" class="grow" rows="1" placeholder="${esc(pl(me).name)} olarak yaz…"></textarea>
+        <button onclick="addNote()">↑</button>
+      </div>`
+      : `<div class="card tight" style="margin:10px 0 0;background:var(--bg2)">
+        <div class="tiny" style="font-weight:800;margin-bottom:7px">Bu telefon kimin?</div>
+        <div class="sw">${P().map(p => `<button onclick="setMe('${p.id}');render()">${p.emoji} ${esc(p.name)}</button>`).join('')}</div>
+        <div class="tiny muted" style="margin-top:6px">Bir kez seç — notların hep senin adına gider.</div>
+      </div>`}
+  </div>`;
+}
+function addNote(){
+  if(!me) return toast('Önce bu telefonun kimin olduğunu seç');
+  const el = $('#noteTx'); const text = el.value.trim();
+  if(!text) return toast('Önce bir şeyler yaz');
+  addEvent({type:'note', player:me, text});
+  el.value = ''; buzz(); render(); toast('Not bırakıldı 📝');
+}
+function relTime(ts){
+  const m = Math.floor((Date.now()-ts)/60000);
+  if(m < 1) return 'az önce';
+  if(m < 60) return m + ' dk önce';
+  const h = Math.floor(m/60);
+  if(h < 24) return h + ' saat önce';
+  const d = daysBetween(ts, Date.now());
+  return d === 1 ? 'dün' : d + ' gün önce';
+}
+
+function taskRow(t, assignedTo, opts = {}){
+  const od = overdue(t);
+  const [a,b] = P();
+  const maxPts = t.points;
+  let meta = `<span>${freqName(t)}</span>`;
+  if(od > 0) meta += `<span class="badge b-late">${od} gün gecikti</span>`;
+  else if(!lastDone(t.id)) meta += `<span class="badge b-me">yeni</span>`;
+  if(opts.due) meta += dueBadge(taskDueDay(t));
+  const turn = turnFor(t);
+  if(turn) meta += `<span class="badge b-turn">🔁 sıra ${esc(pl(turn).name)}'de</span>`;
+  if(assignedTo && !opts.hideWho) meta += `<span class="badge b-me">${pl(assignedTo).emoji} sırada</span>`;
+  const tikla = opts.due ? ` onclick="taskDetailSheet('${t.id}')" style="cursor:pointer"` : '';
+  return `<div class="task ${od>0?'late':''}"${tikla}>
+    <div class="tico">${t.icon||'🧽'}</div>
+    <div class="grow"><div class="tname ell">${esc(t.name)}</div><div class="tmeta">${meta}</div></div>
+    <div class="pts">${maxPts}</div>
+    <div class="whocol">
+      <div class="who">
+        <button class="whobtn" style="border-color:${a.color}" onclick="event.stopPropagation();doTask(event,'${t.id}','${a.id}')">${av(a,24)}</button>
+        <button class="whobtn" style="border-color:${b.color}" onclick="event.stopPropagation();doTask(event,'${t.id}','${b.id}')">${av(b,24)}</button>
+      </div>
+      ${assignedTo ? `<button class="unassign" onclick="event.stopPropagation();unclaimTask('${t.id}')">bırak</button>` : ''}
+    </div>
+  </div>`;
+}
+
+
+function doTask(ev, taskId, pid){
+  const t = S.config.tasks.find(x=>x.id===taskId); if(!t) return;
+  const pts = t.points;
+  addEvent({type:'task', player:pid, taskId, name:t.name, icon:t.icon, points:pts});
+  buzz();
+  const r = ev.currentTarget.getBoundingClientRect();
+  pop('+'+pts, r.left+r.width/2, r.top);
+  const lvlBefore = levelOf(lifetime(pid)-pts).cur.n, lvlNow = levelOf(lifetime(pid)).cur;
+  setTimeout(()=>{
+    render();
+    if(lvlNow.n !== lvlBefore) toast(`${lvlNow.e} ${pl(pid).name} yeni rütbe: ${lvlNow.n}!`);
+    if(goalHit(Date.now()) && weekTotal()-pts < S.config.weeklyGoal) setTimeout(()=>toast(`🔥 Haftalık hedef tamam! Seri: ${streak()} hafta`), 600);
+  }, 240);
+}
+function undo(id){ addEvent({type:'undo', ref:id}); toast('Geri alındı'); render(); }
+function fulfill(id){ addEvent({type:'fulfill', ref:id}); toast('Ödül teslim edildi 🎁'); render(); }
+
+/* ---------------- GÖREVLER ---------------- */
+function vTasks(){
+  const list = S.config.tasks.filter(t=>t.active!==false);
+  const f = taskFilter;
+  const shown = f==='due' ? list.filter(t=>isDue(t)&&!doneToday(t))
+             : f==='all' ? list
+             : list.filter(t=>t.freq===f);
+  const sorted = shown.slice().sort(byUrgency);
+  let h = todosHTML() + `<div class="sec-title">Rutin Görevler</div>
+  <div class="chips">
+    ${[['due','Bugün'],['all','Hepsi'],['daily','Günlük'],['weekly','Haftalık'],['monthly','Aylık']]
+      .map(([k,n])=>`<button class="chip ${f===k?'on':''}" onclick="taskFilter='${k}';render()">${n}</button>`).join('')}
+  </div>`;
+  const asg = assignments();
+  if(!sorted.length) h += `<div class="empty"><span class="e">🧼</span>Bu listede görev yok.</div>`;
+  for(const t of sorted){
+    const l = lastDone(t.id), od = overdue(t);
+    h += `<div class="task ${doneToday(t)?'done':''} ${od>0?'late':''}" >
+      <div class="tico" onclick="editTask('${t.id}')">${t.icon||'🧽'}</div>
+      <div class="grow" onclick="editTask('${t.id}')">
+        <div class="tname ell">${esc(t.name)}</div>
+        <div class="tmeta"><span>${freqName(t)} · ${t.points}p</span>
+        <span>${l ? 'son: '+relDay(l)+(lastDoneBy(t.id)?' · '+esc(pl(lastDoneBy(t.id)).name):'') : 'hiç yapılmadı'}</span>
+        ${turnFor(t) ? `<span class="badge b-turn">🔁 sıra ${esc(pl(turnFor(t)).name)}'de</span>` : ''}
+        ${od>0?`<span class="badge b-late">${od} gün gecikti</span>`:''}
+        ${asg[t.id]?`<span class="badge b-me">${pl(asg[t.id]).emoji}</span>`:''}</div>
+      </div>
+      ${doneToday(t) ? `<span class="tiny" style="color:var(--teal);font-weight:800">✓</span>`
+        : (me && isDue(t) && asg[t.id] !== me
+            ? `<button class="btn sm gh" style="border-color:var(--gold);color:var(--gold);padding:7px 10px;font-size:12px;flex:none"
+                 onclick="claimTask('${t.id}','${me}')">üstlen</button>` : '') + `<div class="who">
+        <button class="whobtn" style="border-color:${P()[0].color}" onclick="doTask(event,'${t.id}','${P()[0].id}')">${av(P()[0],24)}</button>
+        <button class="whobtn" style="border-color:${P()[1].color}" onclick="doTask(event,'${t.id}','${P()[1].id}')">${av(P()[1],24)}</button>
+      </div>`}
+    </div>`;
+  }
+  h += `<button class="btn pri" style="margin-top:14px" onclick="editTask()">+ Yeni Görev</button>`;
+  return h;
+}
+/* ---------------- YAPILACAKLAR (deadline'lı) ---------------- */
+function todosHTML(){
+  const all = todoList();
+  const open = all.filter(td => ['open','late'].includes(todoStatus(td)))
+                  .sort((a,b) => dueEnd(a)-dueEnd(b));
+  const closed = all.filter(td => ['done','late-done'].includes(todoStatus(td)))
+                    .sort((a,b) => b.t-a.t).slice(0, 4);
+
+  let h = `<div class="between" style="margin:4px 4px 8px">
+    <span class="sec-title" style="margin:0">Yapılacaklar</span>
+    <button class="btn sm pri" onclick="editTodo()">+ Ekle</button>
+  </div>`;
+
+  if(!open.length && !closed.length){
+    h += `<div class="empty" style="padding:22px 18px"><span class="e">📋</span>
+      Tarihli bir iş yok.<br><span class="tiny">Ekle, gün ver — yapılmazsa puan gider.</span></div>`;
+  }
+
+  for(const td of open) h += todoRow(td);
+  for(const td of closed) h += todoRow(td);
+  return h;
+}
+
+function todoRow(td){
+  const st = todoStatus(td), p = pl(td.player);
+  const done = st==='done' || st==='late-done';
+  const pen = todoPenalty(td);
+  const left = daysBetween(Date.now(), dueEnd(td) - 1);
+  const when = left === 0 ? 'bugün son gün' : left === 1 ? 'yarın' : left > 1 ? left+' gün var'
+             : left === -1 ? 'dün doldu' : Math.abs(left)+' gün gecikti';
+  let badge = '';
+  if(st === 'late')      badge = `<span class="badge b-late">⏰ ${when} · −${pen}p</span>`;
+  else if(st === 'late-done') badge = `<span class="badge b-late">geç yapıldı · −${pen}p</span>`;
+  else if(st === 'done') badge = `<span class="badge b-ok">✓ zamanında</span>`;
+  else badge = `<span class="badge b-me">📅 ${when}</span>`;
+
+  return `<div class="todo ${st==='late'?'late':''} ${done?'done':''}" onclick="todoDetailSheet('${td.id}')" style="cursor:pointer">
+    <button class="chk ${done?'on':''}" onclick="event.stopPropagation();${done?`toast('Bu iş zaten yapıldı')`:`doTodo(event,'${td.id}')`}">${done?'✓':''}</button>
+    <div class="grow">
+      <div class="tname ell">${td.icon||'📌'} ${esc(td.name)}</div>
+      <div class="tmeta"><span style="color:${p.color};font-weight:800">${p.emoji} ${esc(p.name)}</span>
+        <span>${fmtDay(td.due)}</span>${badge}</div>
+    </div>
+    <div class="pts">${td.points}p</div>
+    ${done?'':`<button class="tiny" style="color:var(--dim2);padding:4px" onclick="event.stopPropagation();undo('${td.id}')">✕</button>`}
+  </div>`;
+}
+function fmtDay(d){
+  const t = new Date(d + 'T00:00:00');
+  return t.toLocaleDateString('tr-TR', {day:'numeric', month:'short'});
+}
+
+/* ============================================================
+   İŞ BİLGİSİ — hafta hafta yapılan işler
+   Geri alma yalnızca içinde bulunulan haftada; geçmiş haftalar dokunulmaz.
+   ============================================================ */
+let historyWeek = 0;                      // 0 = bu hafta, 1 = geçen hafta ...
+
+function workHistorySheet(hafta = 0){
+  historyWeek = hafta;
+  const buHaftaBas = startOfWeek(Date.now());
+  const bas = buHaftaBas - hafta * 7 * DAY, son = bas + 7 * DAY;
+  const isler = liveLog().filter(e => e.type === 'task' && e.t >= bas && e.t < son)
+                         .sort((x,y) => y.t - x.t);
+  const [a,b] = P();
+  const puan = pid => isler.filter(e => e.player === pid).reduce((s,e) => s + e.points, 0);
+  const adet = pid => isler.filter(e => e.player === pid).length;
+
+  /* kaç haftalık kayıt var? gezinme oklarını buna göre göster */
+  const ilk = liveLog().find(e => e.type === 'task');
+  const enEski = ilk ? Math.floor((buHaftaBas - startOfWeek(ilk.t)) / (7*DAY)) : 0;
+
+  const etiket = hafta === 0 ? 'Bu hafta' : hafta === 1 ? 'Geçen hafta'
+    : `${new Date(bas).toLocaleDateString('tr-TR',{day:'numeric',month:'short'})} – ${new Date(son-DAY).toLocaleDateString('tr-TR',{day:'numeric',month:'short'})}`;
+
+  /* güne göre grupla */
+  const gunler = {};
+  for(const e of isler) (gunler[dkey(e.t)] ||= []).push(e);
+
+  let liste = '';
+  for(const [gun, olaylar] of Object.entries(gunler)){
+    const d = new Date(gun + 'T00:00:00');
+    const gunAd = gun === today() ? 'Bugün'
+      : gun === dkey(Date.now() - DAY) ? 'Dün'
+      : `${GUN[(d.getDay()+6)%7]} · ${d.toLocaleDateString('tr-TR',{day:'numeric',month:'short'})}`;
+    liste += `<div class="between" style="margin:12px 4px 6px">
+        <span class="tiny" style="font-weight:800;color:var(--dim)">${gunAd}</span>
+        <span class="tiny muted">${olaylar.reduce((s,e)=>s+e.points,0)}p</span>
+      </div><div class="card">`;
+    for(const e of olaylar){
+      const p = pl(e.player);
+      liste += `<div class="hist">
+        <span style="font-size:17px">${e.icon||'✅'}</span>
+        <span class="grow ell">${esc(e.name)}</span>
+        <span class="tiny" style="color:${p.color};font-weight:800">${av(p,14)} +${e.points}</span>
+        ${hafta === 0 ? `<button class="tiny" style="color:var(--dim2)" onclick="undoFromHistory('${e.id}')">geri al</button>` : ''}
+      </div>`;
+    }
+    liste += `</div>`;
+  }
+
+  sheet(`
+    <h2 style="margin-bottom:12px">İş Bilgisi</h2>
+
+    <div class="row" style="gap:8px;margin-bottom:12px">
+      <button class="btn sm gh" style="flex:none;${hafta>=enEski?'opacity:.35;pointer-events:none':''}"
+        onclick="workHistorySheet(${hafta+1})">‹</button>
+      <div class="grow" style="text-align:center">
+        <div style="font-weight:800">${etiket}</div>
+        <div class="tiny muted">${isler.length} iş</div>
+      </div>
+      <button class="btn sm gh" style="flex:none;${hafta<=0?'opacity:.35;pointer-events:none':''}"
+        onclick="workHistorySheet(${hafta-1})">›</button>
+    </div>
+
+    <div class="card tight" style="margin-bottom:4px">
+      <div class="row" style="justify-content:space-around;text-align:center">
+        <div><div class="tiny muted">${av(a,14)} ${esc(a.name)}</div>
+          <div style="font-weight:900;font-size:16px;color:${a.color}">${adet(a.id)} iş · ${puan(a.id)}p</div></div>
+        <div><div class="tiny muted">${av(b,14)} ${esc(b.name)}</div>
+          <div style="font-weight:900;font-size:16px;color:${b.color}">${adet(b.id)} iş · ${puan(b.id)}p</div></div>
+      </div>
+    </div>
+
+    ${isler.length ? liste
+      : `<div class="empty" style="padding:26px 18px"><span class="e">📖</span>
+         ${hafta === 0 ? 'Bu hafta henüz iş yapılmadı.' : 'Bu hafta hiç iş yapılmamış.'}</div>`}
+  `);
+}
+function undoFromHistory(id){
+  addEvent({type:'undo', ref:id});
+  render(); workHistorySheet(historyWeek); toast('Geri alındı');
+}
+
+/* ---- İşler'deki bir satıra dokununca açılan detay penceresi ---- */
+function todoDetailSheet(id){
+  const td = todoList().find(x => x.id === id); if(!td) return;
+  const st = todoStatus(td), p = pl(td.player), done = st === 'done' || st === 'late-done';
+  const pen = todoPenalty(td);
+  sheet(`
+    <h2 style="margin-bottom:3px">${td.icon||'📌'} ${esc(td.name)}</h2>
+    <p class="sm muted" style="margin:0 0 14px">${av(p,16)} ${esc(p.name)} · ${td.points}p</p>
+    ${done
+      ? `<div class="card tight" style="background:#e6f6ef;border-color:#9ad9c3">
+          <b>${st==='late-done' ? 'Geç yapıldı' : '✓ Zamanında yapıldı'}</b>
+          <div class="tiny muted" style="margin-top:2px">Son gündü: ${fmtDay(td.due)}${pen?` · −${pen}p ceza`:''}</div>
+        </div>`
+      : `<div class="field"><label>Son gün</label><input id="ddDate" type="date" value="${td.due}"></div>
+        <button class="btn pri" onclick="saveDueChange('${id}')">Kaydet</button>`}
+    <button class="btn gh dg" style="margin-top:10px" onclick="undo('${id}');closeSheet();render();toast('Listeden silindi')">Listeden Sil</button>
+  `);
+}
+function saveDueChange(id){
+  const td = todoList().find(x => x.id === id); if(!td) return;
+  const yeni = $('#ddDate').value;
+  if(!yeni) return toast('Bir tarih seç');
+  if(yeni === td.due) return closeSheet();
+  addEvent({type:'undo', ref:id});
+  addEvent({type:'todo', taskId:td.taskId, name:td.name, icon:td.icon, points:td.points, player:td.player, due:yeni});
+  closeSheet(); render(); toast('Son gün güncellendi: ' + fmtDay(yeni));
+}
+
+function taskDetailSheet(taskId){
+  const t = S.config.tasks.find(x => x.id === taskId); if(!t) return;
+  const owner = assignments()[taskId];
+  const p = owner ? pl(owner) : null;
+  sheet(`
+    <h2 style="margin-bottom:3px">${t.icon||'🧽'} ${esc(t.name)}</h2>
+    <p class="sm muted" style="margin:0 0 14px">${freqName(t)} · ${t.points}p${p ? ` · ${p.emoji} ${esc(p.name)} üstünde` : ''}</p>
+    <div class="field"><label>Son gün</label>
+      <input id="tdDate2" type="date" value="${dkey(taskDueDay(t))}">
+      <div class="tiny muted" style="margin-top:5px">Normalde son yapılıştan ${periodOf(t)} gün sonrasına denk gelir.
+        Burada değiştirirsen sonraki periyotlar da bu yeni tarihten itibaren sayılır.</div>
+    </div>
+    <button class="btn pri" onclick="saveTaskDue('${taskId}')">Kaydet</button>
+    ${owner ? `<button class="btn gh dg" style="margin-top:10px" onclick="unclaimTask('${taskId}')">
+        ↩︎ İşi bırak${owner === me ? '' : ` (${esc(p.name)} üstünden al)`}</button>` : ''}
+  `);
+}
+function saveTaskDue(taskId){
+  const yeni = $('#tdDate2').value;
+  if(!yeni) return toast('Bir tarih seç');
+  addEvent({type:'reschedule', taskId, due:yeni});
+  closeSheet(); render(); toast('Son gün güncellendi: ' + fmtDay(yeni));
+}
+function doTodo(ev, id){
+  const td = todoList().find(x => x.id === id); if(!td) return;
+  const late = Date.now() >= dueEnd(td);
+  const pts = td.points;
+  addEvent({type:'task', player:td.player, taskId:td.taskId, name:td.name, icon:td.icon, points:pts});
+  buzz();
+  const r = ev.currentTarget.getBoundingClientRect();
+  pop('+'+pts, r.left + r.width/2, r.top);
+  setTimeout(() => { render(); toast(late ? `Geç de olsa oldu (+${pts}p, ceza duruyor)` : `Zamanında! +${pts}p`); }, 240);
+}
+
+/* yeni yapılacak ekleme */
+let todoDue = 'today', todoWho = 'p1', todoTask = '';
+function editTodo(){
+  todoDue = 'today'; todoWho = P()[0].id; todoTask = '';
+  const opts = S.config.tasks.filter(t => t.active !== false)
+    .sort((a,b) => a.name.localeCompare(b.name,'tr'))
+    .map(t => `<option value="${t.id}">${t.icon} ${esc(t.name)} — ${t.points}p</option>`).join('');
+  sheet(`
+    <h2 style="margin-bottom:4px">Yapılacak Ekle</h2>
+    <p class="sm muted" style="margin:0 0 14px">Gün ver. O güne kadar yapılmazsa puanı gider.</p>
+    <div class="field"><label>Hangi iş?</label>
+      <select id="tdTask" onchange="onTodoTaskChange()">
+        <option value="">— Serbest yaz —</option>${opts}
+      </select></div>
+    <div id="tdFree">
+      <div class="row" style="align-items:flex-start">
+        <div class="field" style="width:76px"><label>İkon</label><input id="tdIcon" value="📌" maxlength="4" style="text-align:center;font-size:22px"></div>
+        <div class="field grow"><label>Ne yapılacak?</label><input id="tdName" placeholder="ör. Kombiyi çağır"></div>
+      </div>
+      <div class="field"><label>Puan</label><input id="tdPts" type="number" inputmode="numeric" value="20"></div>
+    </div>
+    <div class="field"><label>Kim yapacak?</label>
+      <div class="sw">${P().map(p => `<button data-w="${p.id}" class="${p.id===todoWho?'on':''}"
+        onclick="todoWho='${p.id}';document.querySelectorAll('[data-w]').forEach(b=>b.classList.toggle('on',b.dataset.w==='${p.id}'))">${p.emoji} ${esc(p.name)}</button>`).join('')}</div>
+    </div>
+    <div class="field"><label>Son gün</label>
+      <div class="dsel">
+        ${[['today','Bugün'],['tomorrow','Yarın'],['w','Bu hafta sonu'],['pick','Tarih seç']]
+          .map(([k,n]) => `<button data-d="${k}" class="${k===todoDue?'on':''}" onclick="setTodoDue('${k}')">${n}</button>`).join('')}
+      </div>
+      <input id="tdDate" type="date" style="margin-top:8px;display:none" value="${today()}">
+    </div>
+    <button class="btn pri" style="margin-top:6px" onclick="saveTodo()">Ekle</button>
+  `);
+}
+function onTodoTaskChange(){
+  const v = $('#tdTask').value;
+  $('#tdFree').style.display = v ? 'none' : 'block';
+}
+function setTodoDue(k){
+  todoDue = k;
+  document.querySelectorAll('[data-d]').forEach(b => b.classList.toggle('on', b.dataset.d === k));
+  $('#tdDate').style.display = k === 'pick' ? 'block' : 'none';
+}
+function dueDateFor(k){
+  if(k === 'today')    return today();
+  if(k === 'tomorrow') return dkey(Date.now() + DAY);
+  if(k === 'w'){       /* en yakın pazar */
+    const d = new Date(); const add = (7 - d.getDay()) % 7;
+    return dkey(Date.now() + (add || 7) * DAY);
+  }
+  return $('#tdDate').value || today();
+}
+function saveTodo(){
+  const sel = $('#tdTask').value;
+  let taskId, name, icon, points;
+  if(sel){
+    const t = S.config.tasks.find(x => x.id === sel);
+    taskId = t.id; name = t.name; icon = t.icon; points = t.points;
+  } else {
+    name = $('#tdName').value.trim();
+    if(!name) return toast('Ne yapılacağını yaz');
+    icon = $('#tdIcon').value.trim() || '📌';
+    points = Math.max(1, parseInt($('#tdPts').value) || 20);
+    taskId = 'free_' + uid();
+  }
+  addEvent({type:'todo', taskId, name, icon, points, player:todoWho, due:dueDateFor(todoDue)});
+  closeSheet(); render(); toast('Eklendi — saat işliyor ⏳');
+}
+
+/* Rutin görevin son tarihi: son yapılıştan bir periyot sonrası.
+   Hiç yapılmadıysa bugün. */
+/* elle "bu seferlik" tarih değiştirilmişse (reschedule), son tamamlamadan
+   sonraki en güncel reschedule geçerli olur; sonraki periyotta normale döner */
+function taskDueDay(t){
+  const l = lastDone(t.id);                    // en son TAMAMLAMA (ms)
+  let resT = 0, resDay = null;                  // en son yeniden zamanlama: yapıldığı an + verdiği tarih
+  for(const e of liveLog())
+    if(e.type === 'reschedule' && e.taskId === t.id && e.t > resT){
+      resT = e.t; resDay = startOfDay(new Date(e.due+'T00:00:00').getTime());
+    }
+  if(resT > (l || 0)) return resDay;            // en son işlem yeniden zamanlama → henüz yapılmadı, verdiğin tarih geçerli
+  if(!l) return startOfDay(Date.now());
+  /* en son işlem tamamlama: taban = tamamlama günü — ama daha önce ileri bir tarihe
+     ötelenmişse (resDay tamamlama gününden sonraysa) periyot o taban üstünden devam eder.
+     Görev yeterince ileri bir tarihte tekrar yapılınca bu etkisini kendiliğinden yitirir. */
+  let taban = startOfDay(l);
+  if(resDay !== null && resDay > taban) taban = resDay;
+  return taban + periodOf(t) * DAY;
+}
+/* kalan/geçen günü rozete çevir */
+function dueBadge(ts){
+  const gun = daysBetween(Date.now(), ts);
+  if(gun < 0)  return `<span class="badge b-late">⏰ ${Math.abs(gun)} gün gecikti</span>`;
+  if(gun === 0) return `<span class="badge b-me">📅 bugün</span>`;
+  if(gun === 1) return `<span class="badge b-me">📅 yarın</span>`;
+  return `<span class="badge b-ok">📅 ${new Date(ts).toLocaleDateString('tr-TR',{day:'numeric',month:'short'})} · ${gun} gün var</span>`;
+}
+/* bir görevi bugün kendi üstüne al */
+function claimTask(taskId, who){
+  addEvent({type:'assign', date:today(), taskId, player:who});
+  render(); toast('Üstlendin 💪');
+}
+/* Üstlenmeyi geri al — iş havuza döner, kimse üstünde kalmaz.
+   Silmek yerine 'unassign' olayı yazıyoruz ki senkronda iki telefon da aynı sonuca varsın. */
+function unclaimTask(taskId){
+  const t = S.config.tasks.find(x => x.id === taskId);
+  addEvent({type:'unassign', taskId});
+  closeSheet(); render();
+  toast(`${t ? esc(t.name) : 'İş'} bırakıldı`);
+}
+
+/* ---- "+ İş Ekle" penceresi: listeden seç, üstüne al ---- */
+function addWorkSheet(){
+  if(!me) return toast('Önce bu telefonun kimin olduğunu seç');
+  const asg = assignments();
+  const uygun = S.config.tasks.filter(t => t.active !== false && !doneToday(t) && asg[t.id] !== me);
+  const simdi = uygun.filter(t => isDue(t)).sort(byUrgency);
+  const sonra = uygun.filter(t => !isDue(t)).sort((x,y) => taskDueDay(x) - taskDueDay(y));
+
+  const satir = t => `<button class="task" style="width:100%;text-align:left;border:0;padding:10px 11px"
+      onclick="claimFromSheet('${t.id}')">
+      <span class="tico">${t.icon || '🧽'}</span>
+      <span class="grow"><span class="tname ell" style="display:block">${esc(t.name)}</span>
+        <span class="tmeta">${freqName(t)} · ${t.points}p ${dueBadge(taskDueDay(t))}
+        ${asg[t.id] ? `<span class="badge b-me">${pl(asg[t.id]).emoji} üstünde</span>` : ''}
+        ${turnFor(t) ? `<span class="badge b-turn">🔁 sıra ${esc(pl(turnFor(t)).name)}'de</span>` : ''}</span>
+      </span>
+      <span class="pts" style="color:var(--gold)">+</span>
+    </button>`;
+
+  sheet(`
+    <h2 style="margin-bottom:3px">İş Ekle</h2>
+    <p class="sm muted" style="margin:0 0 12px">Eklediğin iş <b>${esc(pl(me).name)}</b>'nin listesine geçer.</p>
+
+    <div class="card tight" style="margin-bottom:6px">
+      <div class="row" style="align-items:flex-start;gap:8px">
+        <input id="qIcon" value="📌" maxlength="4" style="width:56px;text-align:center;font-size:20px">
+        <input id="qName" class="grow" placeholder="Ne yapılacak? (ör. kombiyi çağır)"
+               onkeydown="if(event.key==='Enter')quickAddWork()">
+      </div>
+      <div class="row" style="gap:8px;margin-top:8px">
+        <div class="row" style="gap:6px;flex:none">
+          <input id="qPts" type="number" inputmode="numeric" value="15" style="width:72px;text-align:center">
+          <span class="tiny muted">puan</span>
+        </div>
+        <button class="btn sm pri grow" onclick="quickAddWork()">+ Listeme ekle</button>
+      </div>
+      <div class="tiny muted" style="margin-top:7px">Bugüne eklenir. Farklı gün ya da kişi için
+        <b onclick="closeSheet();editTodo()" style="color:var(--gold)">tarihli iş ekle</b>.</div>
+    </div>
+
+    ${simdi.length ? `<div class="sec-title" style="margin-top:10px">Şimdi Yapılmalı (${simdi.length})</div>
+      ${simdi.map(satir).join('')}` : ''}
+
+    ${sonra.length ? `<div class="sec-title">Vakti Var (${sonra.length})</div>
+      <div class="tiny muted" style="margin:-4px 4px 8px">Erken davranmak isteyene</div>
+      ${sonra.map(satir).join('')}` : ''}
+
+    ${!simdi.length && !sonra.length
+      ? `<div class="empty" style="padding:20px"><span class="e">🎉</span>Alınacak iş kalmadı.</div>` : ''}
+
+    <div class="sec-title">Listede Yok mu?</div>
+    <button class="btn gh" onclick="closeSheet();editTodo()">📅 Tarihli yeni iş ekle</button>
+    <button class="btn gh" style="margin-top:8px" onclick="closeSheet();editTask()">➕ Yeni rutin görev tanımla</button>
+  `);
+}
+/* İş Ekle penceresinden doğrudan yazılan iş — bugüne, kendi listene */
+function quickAddWork(){
+  const ad = $('#qName').value.trim();
+  if(!ad) return toast('Ne yapılacağını yaz');
+  const ikon = $('#qIcon').value.trim() || '📌';
+  const puan = Math.max(1, parseInt($('#qPts').value) || 15);
+  addEvent({type:'todo', taskId:'free_' + uid(), name:ad, icon:ikon,
+            points:puan, player:me, due:today()});
+  closeSheet(); render(); toast(`${ikon} ${ad} eklendi`);
+}
+function claimFromSheet(id){ closeSheet(); claimTask(id, me); }
+
+/* önce gecikenler, sonra sık tekrarlayanlar, sonra ağır işler */
+function byUrgency(x, y){
+  return (overdue(y)-overdue(x)) || (periodOf(x)-periodOf(y)) || (y.points-x.points);
+}
+function relDay(ts){
+  const d = daysBetween(ts, Date.now());
+  return d===0 ? 'bugün' : d===1 ? 'dün' : d+' gün önce';
+}
+
+function editTask(id){
+  const t = id ? S.config.tasks.find(x=>x.id===id) : {name:'',icon:'🧽',points:15,freq:'daily'};
+  sheet(`
+    <h2 style="margin-bottom:14px">${id?'Görevi Düzenle':'Yeni Görev'}</h2>
+    <div class="row" style="align-items:flex-start">
+      <div class="field" style="width:76px"><label>İkon</label><input id="fIcon" value="${esc(t.icon)}" maxlength="4" style="text-align:center;font-size:22px"></div>
+      <div class="field grow"><label>Görev adı</label><input id="fName" value="${esc(t.name)}" placeholder="ör. Banyo temizliği"></div>
+    </div>
+    <div class="field"><label>Puan (zorluk/süreye göre)</label><input id="fPts" type="number" inputmode="numeric" value="${t.points}"></div>
+    <div class="field"><label>Ne sıklıkla?</label>
+      <div class="sw">${Object.entries(FREQ).map(([k,v])=>
+        `<button data-f="${k}" class="${t.freq===k?'on':''}" onclick="pickFreq('${k}')">${v.n}</button>`).join('')}</div>
+      <div id="fDaysWrap" style="margin-top:8px;${t.freq==='custom'?'':'display:none'}">
+        <div class="row" style="gap:8px">
+          <input id="fDays" type="number" inputmode="numeric" min="1" value="${t.days||2}" style="width:90px;text-align:center">
+          <span class="sm muted">günde bir</span>
+        </div>
+      </div>
+    </div>
+    <label class="between card tight" style="margin-bottom:11px">
+      <span><b>🔁 Sırayla yapılsın</b><br><span class="tiny muted">En son kim yaptıysa sıra diğerinde olur.
+        Zorunlu değil — diğerinin işi varsa öbürü de yapabilir.</span></span>
+      <input type="checkbox" id="fAlt" ${t.alternate?'checked':''} style="width:22px;height:22px;flex:none">
+    </label>
+    <button class="btn pri" style="margin-top:6px" onclick="saveTask('${id||''}')">Kaydet</button>
+    ${id?`<button class="btn gh dg" style="margin-top:8px" onclick="delTask('${id}')">Görevi Sil</button>`:''}
+  `);
+}
+function pickFreq(k){
+  document.querySelectorAll('[data-f]').forEach(b => b.classList.toggle('on', b.dataset.f === k));
+  $('#fDaysWrap').style.display = k === 'custom' ? 'block' : 'none';
+}
+function saveTask(id){
+  const name = $('#fName').value.trim(); if(!name) return toast('İsim lazım');
+  const freq = document.querySelector('[data-f].on')?.dataset.f || 'daily';
+  const o = {
+    name, icon: $('#fIcon').value.trim() || '🧽',
+    points: Math.max(1, parseInt($('#fPts').value)||10),
+    freq, active:true,
+    days: freq === 'custom' ? Math.max(1, parseInt($('#fDays').value)||2) : undefined,
+    alternate: $('#fAlt').checked
+  };
+  if(id) Object.assign(S.config.tasks.find(x=>x.id===id), o);
+  else S.config.tasks.push({id:uid(), ...o});
+  touchConfig(); closeSheet(); render(); toast('Kaydedildi');
+}
+function delTask(id){
+  const t = S.config.tasks.find(x=>x.id===id); if(t) t.active = false;
+  touchConfig(); closeSheet(); render(); toast('Görev kaldırıldı');
+}
+
+/* ---------------- DÜKKÂN ---------------- */
+let shopFor = null;
+function vShop(){
+  if(!shopFor) shopFor = P()[0].id;
+  const w = wallet(shopFor);
+  let h = `<div class="card tight between">
+    <div class="row">${P().map(p=>`<button class="chip ${shopFor===p.id?'on':''}" style="display:flex;align-items:center;gap:6px" onclick="shopFor='${p.id}';render()">${av(p,20)} ${esc(p.name)}</button>`).join('')}</div>
+    <div style="text-align:right"><div class="tiny muted">Cüzdan</div><div style="font-weight:900;font-size:19px;color:var(--gold)">${w}p</div></div>
+  </div>`;
+  const items = S.config.shop.filter(s=>s.active!==false);
+  h += `<div class="shop">`;
+  for(const s of items){
+    h += `<button class="item ${w<s.price?'locked':''}" data-sid="${s.id}"
+      onclick="buy('${s.id}')" oncontextmenu="event.preventDefault();editItem('${s.id}')">
+      <span class="ic">${s.icon}</span>
+      <span class="nm">${esc(s.name)}</span>
+      ${s.desc?`<span class="tiny muted" style="line-height:1.3">${esc(s.desc)}</span>`:''}
+      <span class="pr">${s.price}p ${w<s.price?`<span class="tiny muted">· ${s.price-w} eksik</span>`:''}</span>
+    </button>`;
+  }
+  h += `</div><button class="btn pri" style="margin-top:12px" onclick="editItem()">+ Yeni Ödül</button>
+  <div class="tiny muted" style="text-align:center;margin-top:8px">Bir ödüle uzun basarak düzenleyebilirsin</div>`;
+
+  const hist = liveLog().filter(e=>e.type==='buy').reverse().slice(0,12);
+  if(hist.length){
+    const done = new Set(liveLog().filter(e=>e.type==='fulfill').map(e=>e.ref));
+    h += `<div class="sec-title">Ödül Geçmişi</div><div class="card">`;
+    for(const e of hist) h += `<div class="hist">
+      <span style="font-size:16px">${e.icon}</span>
+      <span class="grow ell">${esc(e.name)}</span>
+      <span class="tiny muted">${pl(e.player).emoji} −${e.price}p</span>
+      <span class="tiny" style="color:${done.has(e.id)?'var(--teal)':'var(--dim2)'}">${done.has(e.id)?'✓':'bekliyor'}</span>
+    </div>`;
+    h += `</div>`;
+  }
+  return h;
+}
+let suppressClick = false;
+function buy(id){
+  if(suppressClick){ suppressClick = false; return; }   // uzun basma düzenlemeyi açtı
+  const s = S.config.shop.find(x=>x.id===id); if(!s) return;
+  const w = wallet(shopFor);
+  if(w < s.price) return toast(`${s.price-w} puan daha lazım 🫏`);
+  sheet(`<div style="text-align:center;padding:6px 0 4px">
+    <div style="font-size:46px">${s.icon}</div>
+    <h2 style="margin:8px 0 4px">${esc(s.name)}</h2>
+    <div class="sm muted">${esc(s.desc||'')}</div>
+    <div style="margin:16px 0;font-size:15px">${pl(shopFor).emoji} <b>${esc(pl(shopFor).name)}</b> cüzdanından <b style="color:var(--gold)">${s.price} puan</b> düşecek.</div>
+    <button class="btn pri" onclick="confirmBuy('${id}')">Satın Al</button>
+    <button class="btn gh" style="margin-top:8px" onclick="closeSheet()">Vazgeç</button>
+  </div>`);
+}
+function confirmBuy(id){
+  const s = S.config.shop.find(x=>x.id===id);
+  addEvent({type:'buy', player:shopFor, itemId:id, name:s.name, icon:s.icon, price:s.price});
+  buzz(30); render(); toast(`${s.icon} ${s.name} alındı!`);
+  /* film/dizi seçme ödülüyse hemen hangisini seçtiğini sor */
+  if(/film|dizi/i.test(s.name)) setTimeout(() => pickWatchSheet(), 350);
+  else closeSheet();
+}
+
+/* ödülü kullanırken izleme listesinden seçim yap */
+function pickWatchSheet(){
+  const wm = watchedMap();
+  const bekleyen = [...watchList('film'), ...watchList('dizi')].filter(w => !wm[w.id]);
+  const satir = w => `<button class="wrow" onclick="pickWatch('${w.id}')">
+      ${w.shot ? `<img class="wshot" src="${w.shot}" alt="">` : `<span class="wph">${KIND[w.kind].ikon}</span>`}
+      <span class="grow"><span class="wname ell" style="display:block">${esc(w.title)}</span>
+        <span class="wmeta">${KIND[w.kind].ikon} ${KIND[w.kind].tek} · ${esc(pl(w.player).name)} ekledi</span></span>
+      <span class="go" style="color:var(--gold);font-weight:900">seç</span>
+    </button>`;
+  sheet(`
+    <h2 style="margin-bottom:3px">Hangisini izliyoruz?</h2>
+    <p class="sm muted" style="margin:0 0 12px">Seçtiğin listede “izlendi” olarak işaretlenir.</p>
+    ${bekleyen.length ? bekleyen.map(satir).join('')
+      : `<div class="empty" style="padding:24px"><span class="e">🎬</span>
+         İzleme listesi boş.<br><span class="tiny">Başlığa dokun → Filmler / Diziler'den ekleyebilirsin.</span></div>`}
+    <button class="btn gh" style="margin-top:10px" onclick="closeSheet()">Şimdi değil</button>
+  `);
+}
+function pickWatch(id){
+  addEvent({type:'watched', ref:id, player: me || shopFor});
+  const w = liveLog().find(e => e.type==='watch' && e.id===id);
+  closeSheet(); render(); toast(`${esc(w.title)} seçildi 🍿`);
+}
+function editItem(id){
+  const s = id ? S.config.shop.find(x=>x.id===id) : {name:'',icon:'🎁',price:100,desc:''};
+  sheet(`
+    <h2 style="margin-bottom:14px">${id?'Ödülü Düzenle':'Yeni Ödül'}</h2>
+    <div class="row" style="align-items:flex-start">
+      <div class="field" style="width:76px"><label>İkon</label><input id="sIcon" value="${esc(s.icon)}" maxlength="4" style="text-align:center;font-size:22px"></div>
+      <div class="field grow"><label>Ödül adı</label><input id="sName" value="${esc(s.name)}" placeholder="ör. Film seçme hakkı"></div>
+    </div>
+    <div class="field"><label>Açıklama</label><input id="sDesc" value="${esc(s.desc||'')}" placeholder="kısa not"></div>
+    <div class="field"><label>Fiyat (puan)</label><input id="sPrice" type="number" inputmode="numeric" value="${s.price}"></div>
+    <button class="btn pri" onclick="saveItem('${id||''}')">Kaydet</button>
+    ${id?`<button class="btn gh dg" style="margin-top:8px" onclick="delItem('${id}')">Ödülü Sil</button>`:''}
+  `);
+}
+function saveItem(id){
+  const name = $('#sName').value.trim(); if(!name) return toast('İsim lazım');
+  const o = {name, icon:$('#sIcon').value.trim()||'🎁', desc:$('#sDesc').value.trim(),
+             price: Math.max(1, parseInt($('#sPrice').value)||50), active:true};
+  if(id) Object.assign(S.config.shop.find(x=>x.id===id), o);
+  else S.config.shop.push({id:uid(), ...o});
+  touchConfig(); closeSheet(); render(); toast('Kaydedildi');
+}
+function delItem(id){
+  const s = S.config.shop.find(x=>x.id===id); if(s) s.active = false;
+  touchConfig(); closeSheet(); render(); toast('Ödül kaldırıldı');
+}
+
+/* ---------------- DURUM ---------------- */
+function vStats(){
+  const [a,b] = P();
+  const st = streak();
+  let h = `<div class="kpi" style="margin-bottom:12px">
+    <div><div class="k">Seri</div><div class="v">🔥 ${st}<span style="font-size:13px;color:var(--dim)"> gün</span></div></div>
+    <div><div class="k">Bu Hafta</div><div class="v">${weekPoints(a.id)+weekPoints(b.id)}<span style="font-size:13px;color:var(--dim)"> p</span></div></div>
+  </div>`;
+
+  /* 7 gün grafiği */
+  const days = [];
+  for(let i=6;i>=0;i--){ const ts = Date.now()-i*DAY; days.push({ts, a:dayPoints(a.id,ts), b:dayPoints(b.id,ts)}); }
+  const mx = Math.max(Math.round(S.config.weeklyGoal/7), ...days.map(d=>d.a+d.b), 1);
+  h += `<div class="sec-title">Son 7 Gün</div><div class="card">
+    <div class="chart">${days.map(d=>`<div class="col">
+      <div class="s" style="height:${d.b/mx*100}%;background:${b.color}"></div>
+      <div class="s" style="height:${d.a/mx*100}%;background:${a.color}"></div>
+    </div>`).join('')}</div>
+    <div class="row" style="gap:6px">${days.map(d=>`<div class="grow lb" style="color:var(--dim2)">${GUN[(new Date(d.ts).getDay()+6)%7]}</div>`).join('')}</div>
+  </div>`;
+
+  /* oyuncu kartları */
+  for(const p of P()){
+    const lt = lifetime(p.id), L = levelOf(lt), w = wallet(p.id);
+    h += `<div class="card">
+      <div class="between">
+        <div class="row">${av(p,34)}
+          <div><div style="font-weight:800;font-size:16px">${esc(p.name)}</div>
+            <div class="tiny" style="color:${p.color};font-weight:700">${L.cur.e} ${L.cur.n}</div></div></div>
+        <div style="text-align:right"><div class="tiny muted">Cüzdan</div>
+          <div style="font-weight:900;font-size:18px;color:var(--gold)">${w}p</div></div>
+      </div>
+      <div class="lvlbar"><i style="width:${Math.round(L.pct*100)}%"></i></div>
+      <div class="between tiny muted" style="margin-top:5px">
+        <span>Toplam ${lt}p</span><span>${L.nxt ? `${L.nxt.p-lt}p → ${L.nxt.e} ${L.nxt.n}` : 'Maks. rütbe 👑'}</span>
+      </div>
+      <div class="row tiny muted" style="margin-top:9px;gap:14px">
+        <span>Bugün <b style="color:var(--txt)">${dayPoints(p.id,Date.now())}p</b></span>
+        <span>Bu hafta <b style="color:var(--txt)">${weekPoints(p.id)}p</b></span>
+        <span>Görev <b style="color:var(--txt)">${liveLog().filter(e=>e.type==='task'&&e.player===p.id).length}</b></span>
+        ${penaltiesFor(p.id) ? `<span>Ceza <b style="color:var(--red)">−${penaltiesFor(p.id)}p</b></span>` : ''}
+      </div>
+    </div>`;
+  }
+
+  /* en çok kim yapıyor */
+  const counts = {};
+  for(const e of liveLog()) if(e.type==='task') counts[e.name] = (counts[e.name]||0)+1;
+  const top = Object.entries(counts).sort((x,y)=>y[1]-x[1]).slice(0,5);
+  if(top.length){
+    h += `<div class="sec-title">En Çok Yapılan İşler</div><div class="card">`;
+    for(const [n,c] of top) h += `<div class="hist"><span class="grow ell">${esc(n)}</span><span class="tiny muted">${c}×</span></div>`;
+    h += `</div>`;
+  }
+
+  const recent = liveLog().slice(-25).reverse();
+  if(recent.length){
+    h += `<div class="sec-title">Son Hareketler</div><div class="card">`;
+    for(const e of recent){
+      if(e.type==='assign') continue;
+      const icon = e.type==='buy'?e.icon: e.type==='fulfill'?'✅': e.type==='bonus'?'✨':(e.icon||'🧽');
+      const txt  = e.type==='fulfill' ? 'Ödül teslim edildi' : e.name;
+      const val  = e.type==='buy' ? `−${e.price}p` : e.points!=null ? `+${e.points}p` : '';
+      h += `<div class="hist"><span style="font-size:15px">${icon}</span>
+        <span class="grow ell">${esc(txt||'')}</span>
+        <span class="tiny muted">${new Date(e.t).toLocaleDateString('tr-TR',{day:'numeric',month:'short'})}</span>
+        <span class="tiny" style="font-weight:800;color:${e.type==='buy'?'var(--red)':'var(--teal)'}">${val}</span></div>`;
+    }
+    h += `</div>`;
+  }
+  return h;
+}
+
+/* ---------------- AYARLAR ---------------- */
+function openSettings(){
+  const [a,b] = P();
+  sheet(`
+    <h2 style="margin-bottom:16px">Ayarlar</h2>
+    <div class="sec-title" style="margin-top:0">Eşşekler</div>
+    ${P().map((p,i)=>`<div class="row" style="margin-bottom:9px">
+      <button onclick="pickAvatar('${p.id}')" title="fotoğraf"
+        style="width:52px;height:52px;border-radius:50%;border:1.5px solid var(--line);background:var(--card);
+               display:grid;place-items:center;overflow:hidden;flex:none;padding:0">${av(p,50)}</button>
+      <input id="pe${i}" value="${esc(p.emoji)}" maxlength="4" style="width:56px;text-align:center;font-size:20px">
+      <input id="pn${i}" value="${esc(p.name)}" class="grow" placeholder="isim">
+      ${p.photo?`<button onclick="clearAvatar('${p.id}')" class="tiny" style="color:var(--red);font-weight:800;flex:none">sil</button>`:''}
+    </div>`).join('')}
+    <div class="tiny muted" style="margin:-2px 0 4px">Yuvarlağa dokun → fotoğraf seç. Fotoğraf yoksa emoji görünür.</div>
+    <div class="sec-title">Kurallar</div>
+    <div class="field"><label>Haftalık ortak hedef (puan)</label>
+      <input id="sGoal" type="number" inputmode="numeric" value="${S.config.weeklyGoal}"></div>
+    <div class="field"><label>⏰ Deadline cezası (görev puanının %'si)</label>
+      <input id="sPen" type="number" inputmode="numeric" value="${S.config.latePenalty}">
+      <div class="tiny muted" style="margin-top:4px">Yapılacaklar'da verilen gün kaçırılırsa bu kadar puan gider. 0 = ceza yok.</div>
+    </div>
+    <button class="btn pri" style="margin-top:14px" onclick="saveSettings()">Kaydet</button>
+
+    <div class="sec-title">Bildirimler</div>
+    ${notifBlock()}
+
+    <div class="sec-title">Veri</div>
+    <button class="btn gh" onclick="exportData()">📤 Yedeği Dışa Aktar</button>
+    <button class="btn gh" style="margin-top:8px" onclick="importData()">📥 Yedekten Yükle</button>
+    <button class="btn gh dg" style="margin-top:8px" onclick="resetScores()">🧼 Puanları Sıfırla</button>
+    <div class="tiny muted" style="margin:5px 2px 0">Puan, cüzdan, seri, geçmiş, not ve yapılacakları sıfırlar.
+      Görevler, ödüller, isimler ve fotoğraflar kalır. İki telefonda da geçerli olur.</div>
+    <button class="btn gh dg" style="margin-top:10px" onclick="resetAll()">Her Şeyi Sil (sadece bu cihaz)</button>
+    <button class="btn gh" style="margin-top:10px" onclick="checkUpdate(false)">🔄 Güncelleme Var mı?</button>
+    <button class="btn gh" style="margin-top:8px" onclick="forceUpdate()">⬇️ Son Sürümü Zorla Yükle</button>
+    <div class="tiny muted" style="text-align:center;margin-top:14px">Eşşeklerin Rutini · ${esc(APP_VERSION)}</div>
+  `);
+}
+/* profil fotoğrafı: ortadan kare kırp, 320px, sıkıştır */
+function pickAvatar(pid){
+  const inp = document.createElement('input');
+  inp.type = 'file'; inp.accept = 'image/*';
+  inp.onchange = () => {
+    const f = inp.files[0]; if(!f) return;
+    toast('Fotoğraf işleniyor…');
+    const img = new Image(), rd = new FileReader();
+    rd.onload = () => { img.src = rd.result; };
+    img.onload = () => {
+      const s = Math.min(img.width, img.height), N = 320;
+      const c = document.createElement('canvas'); c.width = c.height = N;
+      c.getContext('2d').drawImage(img, (img.width-s)/2, (img.height-s)/2, s, s, 0, 0, N, N);
+      grabSettingsFields();          // açık formdaki yazılanları kaybetme
+      pl(pid).photo = c.toDataURL('image/jpeg', 0.82);
+      touchConfig(); closeSheet(); render(); toast('Fotoğraf eklendi 📸');
+    };
+    img.onerror = () => toast('Bu dosya okunamadı');
+    rd.readAsDataURL(f);
+  };
+  inp.click();
+}
+function clearAvatar(pid){ grabSettingsFields(); pl(pid).photo = null; touchConfig(); closeSheet(); render(); toast('Fotoğraf kaldırıldı'); }
+function grabSettingsFields(){
+  if(!$('#pn0')) return;
+  P().forEach((p,i) => {
+    p.emoji = $('#pe'+i).value.trim() || p.emoji;
+    p.name  = $('#pn'+i).value.trim() || p.name;
+  });
+}
+
+function notifBlock(){
+  const ios = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  if(notifState === 'unsupported')
+    return `<div class="card tight"><span class="tiny muted">Bu tarayıcı bildirim desteklemiyor.</span></div>`;
+
+  /* iOS'ta ana ekrana eklenmeden bildirim izni verilemez */
+  if(ios && !installed())
+    return `<div class="card tight" style="border-color:var(--goldF)">
+      <b>Önce siteyi ana ekrana ekle</b>
+      <div class="tiny muted" style="margin-top:4px;line-height:1.5">
+        iPhone bildirimlere yalnızca ana ekrana eklenmiş sitelerde izin veriyor.<br>
+        Safari'de aç → paylaş <b>⎙</b> → <b>Ana Ekrana Ekle</b> → uygulamayı oradan aç → buraya dön.
+      </div></div>`;
+
+  return `<div class="card tight">
+    <div class="tiny muted" style="margin-bottom:7px">Bu telefon kimin?</div>
+    <div class="sw">${P().map(p => `<button class="${me===p.id?'on':''}"
+      onclick="setMe('${p.id}');openSettings()">${p.emoji} ${esc(p.name)}</button>`).join('')}</div>
+
+    ${notifState === 'denied'
+      ? `<div class="tiny" style="color:var(--red);margin-top:10px">Bildirim izni reddedilmiş. Telefon ayarlarından bu siteye izin ver, sonra tekrar dene.</div>`
+      : notifState === 'on'
+        ? `<div class="tiny" style="color:var(--teal);font-weight:800;margin-top:10px">🔔 Açık — ${me?esc(pl(me).name)+' olarak':'?'}</div>
+           <button class="btn sm gh" style="margin-top:8px;width:100%" onclick="testNotif()">Test bildirimi gönder</button>
+           <button class="btn sm gh dg" style="margin-top:6px;width:100%" onclick="disableNotifs()">Bildirimleri kapat</button>`
+        : `<div class="tiny muted" style="margin-top:8px">Karşı taraf bir şey yaptığında telefonuna bildirim düşer.</div>
+           <button class="btn sm pri" style="margin-top:8px;width:100%" onclick="enableNotifs()">Bildirimleri aç</button>`}
+  </div>`;
+}
+
+function saveSettings(){
+  P().forEach((p,i)=>{
+    p.emoji = $('#pe'+i).value.trim() || p.emoji;
+    p.name  = $('#pn'+i).value.trim() || p.name;
+  });
+  S.config.weeklyGoal  = Math.max(10, parseInt($('#sGoal').value)||400);
+  S.config.latePenalty = Math.max(0, Math.min(100, parseInt($('#sPen').value) || 0));
+  touchConfig(); closeSheet(); render(); toast('Ayarlar kaydedildi');
+}
+function exportData(){
+  const blob = new Blob([JSON.stringify(S)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = `essek-rutini-${today()}.json`; a.click();
+}
+function importData(){
+  const inp = document.createElement('input'); inp.type = 'file'; inp.accept = '.json';
+  inp.onchange = () => { const f = inp.files[0]; if(!f) return;
+    const r = new FileReader();
+    r.onload = () => { try{ S = mergeState(S, JSON.parse(r.result)); save(); closeSheet(); render(); toast('Yedek yüklendi'); }
+      catch(e){ toast('Dosya okunamadı'); } };
+    r.readAsText(f); };
+  inp.click();
+}
+function resetScores(){
+  sheet(`<h2>Puanları sıfırla</h2>
+    <p class="sm muted">Şunlar sıfırlanır: puanlar, cüzdanlar, seri, tüm geçmiş, notlar ve yapılacaklar.<br>
+    Şunlar kalır: görev listesi ve puan değerleri, dükkân ödülleri, isimler, fotoğraflar, ayarlar.</p>
+    <p class="sm" style="color:var(--gold);font-weight:700">Burki'nin telefonunda da sıfırlanır.</p>
+    <button class="btn dg" onclick="doResetScores()">Evet, sıfırla</button>
+    <button class="btn gh" style="margin-top:8px" onclick="closeSheet()">Vazgeç</button>`);
+}
+function doResetScores(){
+  addEvent({type:'reset'});
+  closeSheet(); render(); toast('Temiz sayfa 🧼');
+}
+
+function resetAll(){
+  sheet(`<h2>Emin misin?</h2><p class="sm muted">Tüm puanlar, geçmiş ve ayarlar silinecek. Geri alınamaz.</p>
+    <button class="btn dg" onclick="localStorage.removeItem('${KEY}');location.reload()">Evet, sıfırla</button>
+    <button class="btn gh" style="margin-top:8px" onclick="closeSheet()">Vazgeç</button>`);
+}
+
+/* ============================================================
+   SENKRON (Supabase REST — SDK yok, sadece fetch)
+   Tablo:  rooms(id text primary key, data jsonb, updated_at timestamptz)
+   ============================================================ */
+function mergeState(A, B){
+  if(!B || !B.log) return A;
+  const seen = new Set(), log = [];
+  for(const e of [...(A.log||[]), ...(B.log||[])]){
+    if(!e || !e.id || seen.has(e.id)) continue;
+    seen.add(e.id); log.push(e);
+  }
+  log.sort((x,y)=>x.t-y.t);
+  const config = (B.config?.updatedAt||0) > (A.config?.updatedAt||0) ? B.config : A.config;
+  return {version:1, config, log};
+}
+
+let syncState = 'off', pushTimer = null, pulling = false;
+function setSyncDot(s){
+  syncState = s;
+  const d = $('#syncDot');
+  d.className = 'dot' + (s==='on'?' on': s==='err'?' err':'');
+}
+function syncOn(){ return sync.url && sync.key && sync.room; }
+function api(path, opts={}){
+  return fetch(sync.url.replace(/\/$/,'') + '/rest/v1/' + path, {
+    ...opts,
+    headers: {
+      apikey: sync.key,
+      Authorization: 'Bearer ' + sync.key,
+      'Content-Type': 'application/json',
+      ...(opts.headers||{})
+    }
+  });
+}
+async function pull(){
+  if(!syncOn() || pulling) return;
+  pulling = true;
+  try{
+    const r = await api(`rooms?id=eq.${encodeURIComponent(sync.room)}&select=data`);
+    if(!r.ok) throw new Error(await r.text());
+    const rows = await r.json();
+    setSyncDot('on');
+    if(rows[0]?.data){
+      const before = JSON.stringify(S);
+      S = mergeState(S, rows[0].data);
+      if(JSON.stringify(S) !== before){ save(); if(!$('#mask').classList.contains('open')) render(); }
+      /* uzak taraf bizde olan bir şeyi kaçırdıysa geri yaz */
+      if((rows[0].data.log||[]).length !== S.log.length) push();
+    } else push();
+    /* günlük fotoğraflar ayrı satırda; onları da tazele */
+    const oncekiFoto = JSON.stringify(todayPhotos());
+    await loadPhotos();
+    if(JSON.stringify(todayPhotos()) !== oncekiFoto && !$('#mask').classList.contains('open')) render();
+  }catch(e){ setSyncDot('err'); }
+  finally{ pulling = false; }
+}
+async function push(){
+  if(!syncOn()) return;
+  try{
+    const r = await api('rooms', {
+      method:'POST',
+      headers:{Prefer:'resolution=merge-duplicates,return=minimal'},
+      body: JSON.stringify([{id: sync.room, data: S, updated_at: new Date().toISOString()}])
+    });
+    if(!r.ok) throw new Error(await r.text());
+    setSyncDot('on');
+    notifyOthers();
+  }catch(e){ setSyncDot('err'); }
+}
+function pushSoon(){ if(!syncOn()) return; clearTimeout(pushTimer); pushTimer = setTimeout(push, 700); }
+
+function openSync(){
+  sheet(`
+    <h2 style="margin-bottom:6px">İki Telefon Senkronu</h2>
+    <p class="sm muted" style="margin-top:0">Zaten kurulu — ikinizin telefonunda hiçbir şey yapmanıza gerek yok.
+      Aşağıdakileri sadece başka bir veritabanına geçmek isterseniz değiştirin.</p>
+    <div class="card tight" style="background:${syncState==='on'?'#e6f6ef':'var(--card2)'};border-color:${syncState==='on'?'#9ad9c3':'var(--line)'}">
+      <b>${syncState==='on' ? '🟢 Senkron çalışıyor' : syncState==='err' ? '🔴 Bağlanamıyor' : '⚪ Bağlanılıyor…'}</b>
+      <div class="tiny muted" style="margin-top:3px">Oda: <b>${esc(sync.room)}</b> · her 7 saniyede bir güncelleniyor</div>
+    </div>
+    <div class="field"><label>Supabase Project URL</label><input id="yUrl" value="${esc(sync.url)}" placeholder="https://xxxx.supabase.co" autocapitalize="off"></div>
+    <div class="field"><label>Anon (public) key</label><input id="yKey" value="${esc(sync.key)}" placeholder="eyJhbGciOi..." autocapitalize="off"></div>
+    <div class="field"><label>Oda kodu (ikinizde aynı olmalı)</label><input id="yRoom" value="${esc(sync.room)}" placeholder="ev-2026" autocapitalize="off"></div>
+    <button class="btn pri" onclick="saveSyncCfg()">Bağlan</button>
+    ${syncOn()?`<button class="btn gh dg" style="margin-top:8px" onclick="syncOff()">Senkronu Kapat</button>`:''}
+    <div class="sec-title">Kurulum (tek seferlik, ~5 dk)</div>
+    <ol class="sm muted" style="padding-left:18px;line-height:1.7;margin:0">
+      <li>supabase.com → ücretsiz hesap → <b>New project</b></li>
+      <li>Sol menü <b>SQL Editor</b> → aşağıdaki kodu yapıştır → Run</li>
+      <li><b>Project Settings → API</b> → URL ve <i>anon public</i> key'i buraya yapıştır</li>
+      <li>Aynı 3 bilgiyi diğer telefona da gir. Bitti.</li>
+    </ol>
+    <pre style="background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:11px;overflow-x:auto;font-size:11px;line-height:1.5;margin-top:10px">create table rooms (
+  id text primary key,
+  data jsonb,
+  updated_at timestamptz default now()
+);
+alter table rooms enable row level security;
+create policy "acik" on rooms
+  for all using (true) with check (true);</pre>
+    <div class="tiny muted" style="margin-top:8px">Not: oda kodunu kimseyle paylaşmayın — bilen herkes veriyi görebilir.</div>
+  `);
+}
+function syncOff(){
+  sync = {url:'', key:'', room:'', off:true};
+  saveSync(); setSyncDot('off'); closeSheet(); toast('Senkron kapatıldı');
+}
+async function saveSyncCfg(){
+  sync = {url:$('#yUrl').value.trim(), key:$('#yKey').value.trim(), room:$('#yRoom').value.trim()};
+  saveSync();
+  if(!syncOn()){ setSyncDot('off'); return toast('Üç alanı da doldur'); }
+  toast('Bağlanılıyor…');
+  await pull();
+  if(syncState==='on'){ closeSheet(); render(); toast('🟢 Senkron aktif'); }
+  else toast('Bağlanamadı — bilgileri kontrol et');
+}
+
+/* ============================================================
+   BİLDİRİMLER (web push)
+   Telefonda çalışması için sitenin "Ana Ekrana Ekle" ile
+   kurulmuş olması gerekir — iOS başka türlü izin vermiyor.
+   ============================================================ */
+const VAPID_PUBLIC = '';   // bildirim için: README'deki VAPID adımı
+const FN_URL = DEFAULT_SYNC.url + '/functions/v1/notify';
+let me = localStorage.getItem(KEY+'_me') || null;   // bu telefon kimin
+let notifState = 'off';
+
+function setMe(id){ me = id; localStorage.setItem(KEY+'_me', id); }
+const installed = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+
+function urlB64ToU8(s){
+  const pad = '='.repeat((4 - s.length % 4) % 4);
+  const raw = atob((s + pad).replace(/-/g,'+').replace(/_/g,'/'));
+  return Uint8Array.from([...raw].map(c => c.charCodeAt(0)));
+}
+async function refreshNotifState(){
+  if(!('Notification' in window) || !('PushManager' in window) || !('serviceWorker' in navigator))
+    { notifState = 'unsupported'; return notifState; }
+  if(Notification.permission === 'denied'){ notifState = 'denied'; return notifState; }
+  try{
+    const reg = await navigator.serviceWorker.getRegistration();
+    const sub = reg && await reg.pushManager.getSubscription();
+    notifState = sub ? 'on' : 'off';
+  }catch(e){ notifState = 'off'; }
+  return notifState;
+}
+
+async function enableNotifs(){
+  if(!me) return toast('Önce bu telefonun kimin olduğunu seç');
+  if(!('PushManager' in window)) return toast('Bu tarayıcı bildirim desteklemiyor');
+  try{
+    const perm = await Notification.requestPermission();
+    if(perm !== 'granted') return toast('İzin verilmedi');
+    const reg = await navigator.serviceWorker.ready;
+    let sub = await reg.pushManager.getSubscription();
+    if(!sub) sub = await reg.pushManager.subscribe({
+      userVisibleOnly: true, applicationServerKey: urlB64ToU8(VAPID_PUBLIC) });
+    /* service worker'ın hangi odayı okuyacağını bilmesi için */
+    const c = await caches.open('essek-cfg');
+    await c.put('room', new Response(JSON.stringify({room: sync.room})));
+    const j = sub.toJSON();
+    const r = await api('subs', { method:'POST',
+      headers:{ Prefer:'resolution=merge-duplicates,return=minimal' },
+      body: JSON.stringify([{ endpoint:j.endpoint, room:sync.room, player:me, keys:j.keys }]) });
+    if(!r.ok) return toast('Kaydedilemedi (' + r.status + ')');
+    await refreshNotifState(); openSettings(); toast('Bildirimler açıldı 🔔');
+  }catch(e){ toast('Olmadı: ' + String(e.message||e).slice(0,50)); }
+}
+
+async function disableNotifs(){
+  try{
+    const reg = await navigator.serviceWorker.getRegistration();
+    const sub = reg && await reg.pushManager.getSubscription();
+    if(sub){
+      await api('subs?endpoint=eq.' + encodeURIComponent(sub.endpoint), {method:'DELETE'});
+      await sub.unsubscribe();
+    }
+    await refreshNotifState(); openSettings(); toast('Bildirimler kapatıldı');
+  }catch(e){ toast('Olmadı'); }
+}
+
+function callNotify(from){
+  return fetch(FN_URL, { method:'POST',
+    headers:{ 'Content-Type':'application/json', apikey: sync.key, Authorization:'Bearer ' + sync.key },
+    body: JSON.stringify({ room: sync.room, from }) });
+}
+async function testNotif(){
+  try{
+    const other = P().find(p => p.id !== me);
+    const r = await callNotify(other ? other.id : null);   // hedef: bu telefon
+    const j = await r.json();
+    toast(j.sent ? 'Gönderildi 📨 birazdan gelmeli' : 'Abone yok — önce bildirimi aç');
+  }catch(e){ toast('Gönderilemedi'); }
+}
+
+/* bir şey değiştiğinde karşı tarafın telefonunu dürt */
+let notifyTimer = null;
+function notifyOthers(){
+  if(!syncOn() || !me) return;
+  clearTimeout(notifyTimer);
+  notifyTimer = setTimeout(() => callNotify(me).catch(()=>{}), 1500);
+}
+
+/* ============================================================
+   SÜRÜM DENETİMİ
+   iOS'ta uygulama arka planda kalınca eski kodla devam edebiliyor.
+   Sunucudaki sürümü kontrol edip fark varsa güncelleme çubuğu gösteriyoruz.
+   ============================================================ */
+async function checkUpdate(sessiz = true){
+  try{
+    const r = await fetch('version.txt?t=' + Date.now(), {cache:'no-store'});
+    if(!r.ok) return;
+    const uzak = (await r.text()).trim();
+    /* Beklenen biçim: v12, v13...  Ağ hatasında araya HTML karışabiliyor —
+       doğrulamadan kullanırsak tüm sayfa "sürüm" sanılıp ekrana basılıyor. */
+    if(!/^v\d+$/.test(uzak)){ if(!sessiz) toast('Sürüm bilgisi okunamadı'); return; }
+    if(uzak !== APP_VERSION) showUpdateBar(uzak);
+    else if(!sessiz) toast('En güncel sürümdesin ✓');
+  }catch(e){ if(!sessiz) toast('Kontrol edilemedi'); }
+}
+function showUpdateBar(uzak){
+  if($('#updbar')) return;
+  const el = document.createElement('div');
+  el.id = 'updbar';
+  el.innerHTML = `<span style="font-size:22px">✨</span>
+    <div class="grow"><b style="font-size:14px">Yeni sürüm hazır</b>
+      <div class="tiny muted">${esc(APP_VERSION)} → ${esc(uzak)}</div></div>
+    <button class="btn sm pri" onclick="forceUpdate()">Güncelle</button>`;
+  document.body.appendChild(el);
+}
+/* service worker'ı ve önbelleği temizleyip yeniden yükle */
+async function forceUpdate(){
+  toast('Güncelleniyor…');
+  try{
+    const rs = await navigator.serviceWorker.getRegistrations();
+    for(const r of rs) await r.unregister();
+    /* 'essek-cfg' oda kodunu tutuyor — silinirse bildirimler ne olduğunu anlatamaz */
+    for(const k of await caches.keys()) if(k !== 'essek-cfg') await caches.delete(k);
+  }catch(e){}
+  location.replace(location.pathname + '?g=' + Date.now());
+}
+
+/* ---------------- sheet / nav / boot ---------------- */
+/* Panel açıkken arka sayfanın kaymasını engelle (iOS için position:fixed şart) */
+let sheetScroll = 0;
+function sheet(html){
+  if(!$('#mask').classList.contains('open')){
+    sheetScroll = window.scrollY || 0;
+    document.body.style.position = 'fixed';
+    document.body.style.top = `-${sheetScroll}px`;
+    document.body.style.width = '100%';
+  }
+  $('#sheet').innerHTML =
+    `<div class="sheetbar"><span class="grab"></span>
+       <button class="sheetX" onclick="closeSheet()" aria-label="Kapat">✕</button></div>` + html;
+  $('#mask').classList.add('open');
+  $('#sheet').scrollTop = 0;
+}
+function closeSheet(){
+  $('#mask').classList.remove('open');
+  document.body.style.position = '';
+  document.body.style.top = '';
+  document.body.style.width = '';
+  window.scrollTo(0, sheetScroll);
+}
+$('#mask').addEventListener('click', e => { if(e.target.id==='mask') closeSheet(); });
+document.querySelectorAll('.nb').forEach(b => b.onclick = () => { tab = b.dataset.tab; buzz(8); render(); });
+$('#btnSync').onclick = openSync;
+
+/* uzun basma → ödül düzenle (mobil) */
+let lpTimer = null;
+document.addEventListener('touchstart', e => {
+  const it = e.target.closest('.item'); if(!it) return;
+  lpTimer = setTimeout(() => { suppressClick = true; buzz(25); editItem(it.dataset.sid); }, 550);
+}, {passive:true});
+['touchend','touchmove','touchcancel'].forEach(ev =>
+  document.addEventListener(ev, () => clearTimeout(lpTimer), {passive:true}));
+
+/* ---------------- ana ekrana kurulum ---------------- */
+let installEvt = null;
+const standalone = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); installEvt = e; showInstall(); });
+
+function showInstall(){
+  if(standalone() || localStorage.getItem(KEY+'_noinstall') || $('#instbar')) return;
+  const ios = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  if(!installEvt && !ios) return;
+  const el = document.createElement('div');
+  el.id = 'instbar';
+  el.innerHTML = `<span style="font-size:26px">🫏</span>
+    <div class="grow"><b style="font-size:14px">Ana ekrana ekle</b>
+      <div class="tiny muted">${ios ? 'Paylaş <b>⎙</b> → “Ana Ekrana Ekle”' : 'Uygulama gibi tam ekran açılsın'}</div></div>
+    ${installEvt ? `<button class="btn sm pri" id="instGo">Kur</button>` : ''}
+    <button id="instNo" style="color:var(--dim2);font-size:20px;padding:0 4px">×</button>`;
+  document.body.appendChild(el);
+  el.querySelector('#instNo').onclick = () => { localStorage.setItem(KEY+'_noinstall','1'); el.remove(); };
+  const go = el.querySelector('#instGo');
+  if(go) go.onclick = async () => { el.remove(); installEvt.prompt(); await installEvt.userChoice; installEvt = null; };
+}
+
+if('serviceWorker' in navigator)
+  window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(()=>{}));
+
+load();
+render();
+refreshNotifState();
+/* service worker'ın bildirimde kullanacağı oda kodunu güncel tut */
+if(syncOn() && 'caches' in window)
+  caches.open('essek-cfg')
+    .then(c => c.put('room', new Response(JSON.stringify({room: sync.room}))))
+    .catch(()=>{});
+checkUpdate();
+startPhotoTimer();
+if(syncOn()){ setSyncDot('off'); pull(); }
+setInterval(() => { if(syncOn() && document.visibilityState==='visible') pull(); }, 7000);
+document.addEventListener('visibilitychange', () => {
+  if(document.visibilityState==='visible'){ render(); pull(); checkUpdate(); }
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,16 @@
+# Netlify her git push'unda bunu çalıştırıp dist/ klasörünü yayınlar.
+[build]
+  command = "./build.sh"
+  publish = "dist"
+
+# version.txt her zaman taze okunmalı — güncelleme kontrolü buna bakıyor
+[[headers]]
+  for = "/version.txt"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
+
+# service worker eski sürümde takılmasın
+[[headers]]
+  for = "/sw.js"
+  [headers.values]
+    Cache-Control = "no-cache"
